@@ -1,0 +1,3265 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+
+/**
+ * @title PulseChain Flash Loan Arbitrage
+ * @author Merged from various sources and optimized
+ * @notice Advanced arbitrage system with ML, quantum optimization, and MEV protection
+ */
+
+// ============ Interfaces ============
+interface IWPLS {
+    function deposit() external payable;
+    function withdraw(uint256) external;
+    function transfer(address to, uint256 value) external returns (bool);
+    function transferFrom(address from, address to, uint256 value) external returns (bool);
+    function balanceOf(address owner) external view returns (uint256);
+    function approve(address spender, uint256 value) external returns (bool);
+}
+
+interface IPulseXPair {
+    function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external;
+    function token0() external view returns (address);
+    function token1() external view returns (address);
+    function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
+    function price0CumulativeLast() external view returns (uint256);
+    function price1CumulativeLast() external view returns (uint256);
+    function sync() external;
+}
+
+interface IPulseXFactory {
+    function getPair(address tokenA, address tokenB) external view returns (address pair);
+    function createPair(address tokenA, address tokenB) external returns (address pair);
+    function setFeeTo(address) external;
+    function feeTo() external view returns (address);
+    function allPairs(uint) external view returns (address pair);
+    function allPairsLength() external view returns (uint);
+}
+
+interface IPulseXRouter {
+    function factory() external pure returns (address);
+    function WPLS() external pure returns (address);
+    
+    function addLiquidity(
+        address tokenA,
+        address tokenB,
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        uint256 amountAMin,
+        uint256 amountBMin,
+        address to,
+        uint256 deadline
+    ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);
+
+    function swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external;
+    
+    function swapExactTokensForTokens(
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address[] calldata path,
+        address to,
+        uint256 deadline
+    ) external returns (uint256[] memory amounts);
+
+    function getAmountsOut(uint256 amountIn, address[] calldata path) 
+        external view returns (uint256[] memory amounts);
+}
+
+interface ILendingPool {
+    function flashLoanSimple(
+        address receiverAddress,
+        address asset,
+        uint256 amount,
+        bytes calldata params,
+        uint16 referralCode
+    ) external;
+
+    function addressesProvider() external view returns (address);
+}
+
+interface IFlashLoanReceiver {
+    function executeOperation(
+        address asset,
+        uint256 amount,
+        uint256 premium,
+        address initiator,
+        bytes calldata params
+    ) external returns (bool);
+}
+
+contract PulseChainArbitrage is Ownable, ReentrancyGuard, Pausable, AccessControl, IFlashLoanReceiver {
+    using SafeERC20 for IERC20;
+    using SafeMath for uint256;
+    using Math for uint256;
+
+    // ============ Constants ============
+    uint256 public constant BASIS_POINTS = 10000;
+    uint256 public constant MAX_PATH_LENGTH = 4;
+    uint256 public constant MIN_PROFIT_BPS = 50; // 0.5%
+    uint256 public constant MAX_GAS_PRICE = 500 gwei;
+    uint256 public constant MIN_LIQUIDITY = 1000 ether;
+    uint256 public constant MAX_SLIPPAGE = 300; // 3%
+    uint256 public constant FLASH_LOAN_FEE = 9; // 0.09%
+    uint256 public constant BLOCKS_PER_DAY = 7200; // PulseChain blocks
+    uint256 public constant PROTOCOL_FEE = 30; // 0.3%
+    uint256 public constant DEV_FEE = 10; // 0.1%
+    uint256 public constant MAX_FEE = 100; // 1%
+
+    // Core addresses - PulseChain Mainnet
+    address public constant WPLS = 0xA1077a294dDE1B09bB078844df40758a5D0f9a27;
+    address public constant GENESIS_WALLET = 0x168aFfCbcc2f07C6062d23a1d23161f1fD13CA24;
+    address public constant PULSEX_FACTORY = 0x29eA7545DEf87022BAdc76323F373EA1e707C523;
+    address public constant PULSEX_ROUTER = 0x98bf93ebf5c380C0e6Ae8e192A7e2AE08edAcc02;
+    address public constant PLSX = 0x95B303987A60C71504D99Aa1b13B4DA07b0790ab;
+    address public constant INC = 0x2fa878Ab3F87CC1C9737Fc071108F904c0B0C95d;
+    address public constant HEX = 0x2b591e99afE9f32eAA6214f7B7629768c40Eeb39;
+
+    // Role identifiers
+    bytes32 public constant TIMELOCK_ADMIN_ROLE = keccak256("TIMELOCK_ADMIN_ROLE");
+    bytes32 public constant UPGRADE_ROLE = keccak256("UPGRADE_ROLE");
+    bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
+    bytes32 public constant EMERGENCY_ADMIN_ROLE = keccak256("EMERGENCY_ADMIN_ROLE");
+    bytes32 public constant TREASURY_ROLE = keccak256("TREASURY_ROLE");
+
+    // ============ Core Structs ============
+    struct SelfFundingConfig {
+        uint256 targetLiquidity;
+        uint256 minLiquidity;
+        uint256 maxLiquidity;
+        uint256 reinvestmentRate;
+        uint256 emergencyThreshold;
+        uint256 lastRebalance;
+        bool autoCompound;
+    }
+
+    /**
+     * @notice Generate ML prediction for trade
+     * @param mlEngine Deep learning engine instance
+     * @param path Token path
+     * @param amount Trade amount
+     * @return confidence Prediction confidence score
+     */
+    function _generatePrediction(
+        DeepLearningEngine storage mlEngine,
+        address[] memory path,
+        uint256 amount
+    ) internal returns (uint256) {
+        // Process input features
+        uint256[] memory features = _extractTradeFeatures(path, amount);
+        
+        // Apply transformer layers
+        mlEngine.transformerLayers = _applyTransformerLayers(features);
+        
+        // Process LSTM states
+        mlEngine.lstmStates = _processLSTMStates(mlEngine.transformerLayers);
+        
+        // Calculate attention weights
+        mlEngine.attentionWeights = _calculateAttentionWeights(
+            mlEngine.transformerLayers,
+            mlEngine.lstmStates
+        );
+
+        // Generate final prediction
+        uint256 confidence = _calculatePredictionConfidence(
+            mlEngine.transformerLayers,
+            mlEngine.lstmStates,
+            mlEngine.attentionWeights
+        );
+
+        mlEngine.confidenceScore = confidence;
+        mlEngine.lastUpdate = block.timestamp;
+
+        emit PredictionGenerated(
+            keccak256(abi.encodePacked(path)),
+            confidence,
+            block.timestamp
+        );
+
+        return confidence;
+    }
+
+    /**
+     * @notice Extract features for ML processing
+     * @param path Token path
+     * @param amount Trade amount
+     * @return features Extracted feature array
+     */
+    function _extractTradeFeatures(
+        address[] memory path,
+        uint256 amount
+    ) internal view returns (uint256[] memory) {
+        uint256[] memory features = new uint256[](path.length * 3);
+        uint256 featureIndex = 0;
+        
+        for (uint256 i = 0; i < path.length - 1; i++) {
+            // Price data
+            features[featureIndex++] = _getTokenPrice(path[i]);
+            
+            // Liquidity metrics
+            (uint256 reserve0, uint256 reserve1) = _getRouterReserves(
+                PULSEX_ROUTER,
+                path[i],
+                path[i + 1]
+            );
+            
+            features[featureIndex++] = reserve0;
+            features[featureIndex++] = reserve1;
+        }
+
+        return features;
+    }
+
+    /**
+     * @notice Apply transformer layers for deep pattern recognition
+     * @param features Input features
+     * @return Transformed features
+     */
+    function _applyTransformerLayers(
+        uint256[] memory features
+    ) internal pure returns (uint256[] memory) {
+        uint256[] memory transformedFeatures = new uint256[](features.length);
+        
+        // Multi-head attention transformation
+        for (uint256 i = 0; i < features.length; i++) {
+            transformedFeatures[i] = _applyMultiHeadAttention(
+                features,
+                i,
+                8  // Number of attention heads
+            );
+        }
+        
+        // Apply feed-forward neural network
+        transformedFeatures = _applyFeedForward(transformedFeatures);
+        
+        // Layer normalization
+        transformedFeatures = _applyLayerNorm(transformedFeatures);
+        
+        return transformedFeatures;
+    }
+
+    /**
+     * @notice Apply multi-head attention mechanism
+     * @param features Input features
+     * @param position Current position
+     * @param numHeads Number of attention heads
+     * @return Attention score
+     */
+    function _applyMultiHeadAttention(
+        uint256[] memory features,
+        uint256 position,
+        uint256 numHeads
+    ) internal pure returns (uint256) {
+        uint256 attentionScore = 0;
+        uint256 headSize = features.length / numHeads;
+        
+        for (uint256 head = 0; head < numHeads; head++) {
+            uint256 startIdx = head * headSize;
+            uint256 endIdx = startIdx + headSize;
+            
+            // Calculate attention scores for current head
+            uint256 headScore = _calculateHeadAttention(
+                features,
+                position,
+                startIdx,
+                endIdx
+            );
+            
+            attentionScore = attentionScore + (headScore / numHeads);
+        }
+        
+        return attentionScore;
+    }
+
+    /**
+     * @notice Process LSTM states for sequential data
+     * @param features Transformed feature array
+     * @return LSTM states
+     */
+    function _processLSTMStates(
+        uint256[] memory features
+    ) internal pure returns (uint256[] memory) {
+        uint256[] memory lstmStates = new uint256[](features.length);
+        uint256 cellState = 0;
+        uint256 hiddenState = 0;
+        
+        for (uint256 i = 0; i < features.length; i++) {
+            // Calculate gates
+            uint256 forgetGate = _calculateGate(
+                features[i],
+                hiddenState,
+                "forget"
+            );
+            
+            uint256 inputGate = _calculateGate(
+                features[i],
+                hiddenState,
+                "input"
+            );
+            
+            uint256 outputGate = _calculateGate(
+                features[i],
+                hiddenState,
+                "output"
+            );
+            
+            // Update cell state
+            cellState = _updateCellState(
+                cellState,
+                forgetGate,
+                inputGate,
+                features[i]
+            );
+            
+            // Update hidden state
+            hiddenState = _updateHiddenState(
+                cellState,
+                outputGate
+            );
+            
+            lstmStates[i] = hiddenState;
+        }
+        
+        return lstmStates;
+    }
+
+    // ============ Advanced ML and Quantum Systems ============
+    
+    struct DeepLearningEngine {
+        uint256[] transformerLayers;
+        uint256[] lstmStates;
+        uint256[] attentionWeights;
+        mapping(bytes32 => uint256) neuralCache;
+        uint256 lastUpdate;
+        uint256 confidenceScore;
+        uint256 predictionAccuracy;
+        bool isTraining;
+        bytes32 modelHash;
+    }
+
+    struct QuantumOptimization {
+        uint256[] superpositionStates;
+        uint256[] entanglementPatterns;
+        uint256[] quantumStates;
+        mapping(bytes32 => uint256) quantumStrategies;
+        uint256 coherenceScore;
+        uint256 lastOptimization;
+        bytes32 quantumHash;
+        bool isOptimized;
+    }
+
+    // State variables for ML and Quantum systems
+    mapping(bytes32 => DeepLearningEngine) public mlEngines;
+    mapping(bytes32 => QuantumOptimization) public quantumOpts;
+
+    /**
+     * @notice Apply quantum optimization to trade parameters
+     * @param routeHash Hash of trade route
+     * @param path Token path
+     * @param amounts Trade amounts
+     * @return optimizedAmount Optimized trade amount
+     * @return expectedProfit Expected profit
+     */
+    function _applyQuantumOptimization(
+        bytes32 routeHash,
+        address[] memory path,
+        uint256[] memory amounts
+    ) internal returns (uint256 optimizedAmount, uint256 expectedProfit) {
+        QuantumOptimization storage quantum = quantumOpts[routeHash];
+        
+        // Initialize quantum states
+        quantum.superpositionStates = _initializeQuantumStates(amounts);
+        quantum.entanglementPatterns = _calculateEntanglementPatterns(path);
+        quantum.quantumStates = new uint256[](amounts.length);
+        
+        // Apply quantum interference
+        for (uint256 i = 0; i < path.length - 1; i++) {
+            quantum.quantumStates[i] = _applyQuantumInterference(
+                quantum.superpositionStates[i],
+                quantum.entanglementPatterns[i],
+                amounts[i]
+            );
+        }
+        
+        // Collapse quantum states
+        (optimizedAmount, expectedProfit) = _collapseQuantumStates(
+            quantum.quantumStates,
+            quantum.entanglementPatterns,
+            path
+        );
+
+        // Update optimization state
+        quantum.coherenceScore = _calculateCoherenceScore(
+            quantum.quantumStates,
+            quantum.entanglementPatterns
+        );
+        quantum.lastOptimization = block.timestamp;
+        quantum.isOptimized = true;
+
+        emit OptimizationCompleted(
+            routeHash,
+            quantum.coherenceScore,
+            block.timestamp
+        );
+
+        return (optimizedAmount, expectedProfit);
+    }
+
+    /**
+     * @notice Initialize quantum states for optimization
+     * @param amounts Array of trade amounts
+     * @return Initialized quantum states
+     */
+    function _initializeQuantumStates(
+        uint256[] memory amounts
+    ) internal pure returns (uint256[] memory) {
+        uint256[] memory states = new uint256[](amounts.length);
+        
+        for (uint256 i = 0; i < amounts.length; i++) {
+            // Create superposition using amount entropy
+            states[i] = uint256(keccak256(abi.encodePacked(
+                amounts[i],
+                BASIS_POINTS,
+                i
+            )));
+        }
+        
+        return states;
+    }
+
+    /**
+     * @notice Calculate entanglement patterns for path optimization
+     * @param path Array of token addresses
+     * @return Entanglement patterns
+     */
+    function _calculateEntanglementPatterns(
+        address[] memory path
+    ) internal view returns (uint256[] memory) {
+        uint256[] memory patterns = new uint256[](path.length - 1);
+        
+        for (uint256 i = 0; i < path.length - 1; i++) {
+            // Get pair data
+            (uint256 reserve0, uint256 reserve1) = _getRouterReserves(
+                PULSEX_ROUTER,
+                path[i],
+                path[i + 1]
+            );
+            
+            // Calculate entanglement pattern
+            patterns[i] = uint256(keccak256(abi.encodePacked(
+                reserve0,
+                reserve1,
+                _getLiquidityScore(path[i], path[i + 1])
+            )));
+        }
+        
+        return patterns;
+    }
+
+    /**
+     * @notice Apply quantum interference to optimize parameters
+     * @param state Quantum state
+     * @param entanglement Entanglement pattern
+     * @param amount Trade amount
+     * @return Optimized state
+     */
+    function _applyQuantumInterference(
+        uint256 state,
+        uint256 entanglement,
+        uint256 amount
+    ) internal pure returns (uint256) {
+        // Apply quantum transformations
+        uint256 interference = uint256(keccak256(abi.encodePacked(
+            state,
+            entanglement,
+            amount
+        )));
+        
+        // Create interference pattern
+        return (state ^ interference) & ((1 << 128) - 1);
+    }
+
+    /**
+     * @notice Collapse quantum states to determine optimal parameters
+     * @param states Quantum states
+     * @param entanglements Entanglement patterns
+     * @param path Token path
+     * @return optimizedAmount Optimized amount
+     * @return expectedProfit Expected profit
+     */
+    function _collapseQuantumStates(
+        uint256[] memory states,
+        uint256[] memory entanglements,
+        address[] memory path
+    ) internal view returns (uint256 optimizedAmount, uint256 expectedProfit) {
+        uint256 coherenceScore = _calculateCoherenceScore(states, entanglements);
+        
+        // Optimize amount based on quantum coherence
+        optimizedAmount = states[0] * coherenceScore / BASIS_POINTS;
+        
+        // Calculate expected profit using quantum-adjusted parameters
+        expectedProfit = _calculateQuantumAdjustedProfit(
+            optimizedAmount,
+            path,
+            coherenceScore
+        );
+        
+        // Apply quantum uncertainty principle
+        (optimizedAmount, expectedProfit) = _applyUncertaintyPrinciple(
+            optimizedAmount,
+            expectedProfit,
+            coherenceScore
+        );
+        
+        return (optimizedAmount, expectedProfit);
+    }
+
+    // ============ Events & Modifiers ============
+
+    // Core operation events
+    event ArbitrageExecuted(
+        bytes32 indexed identifier,
+        address[] path,
+        uint256 inputAmount,
+        uint256 outputAmount,
+        uint256 profit,
+        uint256 gasUsed,
+        bool withFlashLoan,
+        uint256 timestamp
+    );
+
+    event FlashLoanExecuted(
+        bytes32 indexed identifier,
+        address asset,
+        uint256 amount,
+        uint256 fee,
+        uint256 profit,
+        uint256 timestamp
+    );
+
+    event FlashLoanFailed(
+        bytes32 indexed identifier,
+        string reason,
+        bytes errorData,
+        uint256 timestamp
+    );
+
+    event OpportunityDetected(
+        bytes32 indexed identifier,
+        address[] path,
+        uint256 expectedProfit,
+        uint256 confidence,
+        uint256 timestamp
+    );
+
+    event PathPerformanceUpdated(
+        bytes32 indexed pathHash,
+        uint256 successRate,
+        uint256 averageProfit,
+        uint256 timestamp
+    );
+
+    event CircuitBreakerTriggered(
+        string reason,
+        address indexed trigger,
+        uint256 timestamp
+    );
+
+    // System state events
+    event SystemStateUpdated(
+        uint256 totalExecutions,
+        uint256 successfulExecutions,
+        uint256 totalProfit,
+        uint256 timestamp
+    );
+
+    event MarketStateChanged(
+        bytes32 indexed identifier,
+        bytes32 startState,
+        bytes32 endState,
+        uint256 timestamp
+    );
+
+    // Configuration events
+    event ConfigurationUpdated(
+        bytes32 indexed configType,
+        bytes32 oldConfig,
+        bytes32 newConfig,
+        uint256 timestamp
+    );
+
+    event ThresholdUpdated(
+        string indexed thresholdType,
+        uint256 oldValue,
+        uint256 newValue,
+        uint256 timestamp
+    );
+
+    // Fee events
+    event FeesProcessed(
+        uint256 totalAmount,
+        uint256 protocolFee,
+        uint256 devFee,
+        uint256 stakingFee,
+        uint256 timestamp
+    );
+
+    event RewardsDistributed(
+        uint256 amount,
+        uint256 stakingReward,
+        uint256 timestamp
+    );
+
+    // ============ Modifiers ============
+
+    modifier onlyOperator() {
+        require(hasRole(OPERATOR_ROLE, msg.sender), "Caller is not operator");
+        _;
+    }
+
+    modifier onlyEmergencyAdmin() {
+        require(hasRole(EMERGENCY_ADMIN_ROLE, msg.sender), "Caller not emergency admin");
+        _;
+    }
+
+    modifier validatePath(address[] memory path) {
+        require(path.length >= 2 && path.length <= MAX_PATH_LENGTH, "Invalid path length");
+        for (uint256 i = 0; i < path.length; i++) {
+            require(path[i] != address(0), "Invalid token address");
+            require(authorizedTokens[path[i]], "Unauthorized token");
+            if (i > 0) require(path[i] != path[i-1], "Duplicate tokens");
+        }
+        _;
+    }
+
+    modifier ensureDeadline(uint256 deadline) {
+        require(block.timestamp <= deadline, "Deadline expired");
+        _;
+    }
+
+    modifier validateGas() {
+        require(gasleft() >= 100000, "Insufficient gas");
+        require(tx.gasprice <= MAX_GAS_PRICE, "Gas price too high");
+        _;
+    }
+
+    modifier nonReentrantFlashLoan() {
+        require(!_stakeReentryGuard, "ReentrancyGuard: reentrant call");
+        _stakeReentryGuard = true;
+        _;
+        _stakeReentryGuard = false;
+    }
+
+    modifier whenNotEmergency() {
+        require(!emergencyState.emergencyMode, "Contract is in emergency mode");
+        _;
+    }
+
+    modifier checkRateLimit() {
+        require(dailyTrades < MAX_DAILY_TRADES, "Rate limit exceeded");
+        _;
+    }
+
+    // Custom error definitions
+    error UnauthorizedAccess(address caller, string requirement);
+    error InvalidPath(string reason, bytes data);
+    error ExecutionFailed(string reason, bytes data);
+    error CircuitBreakerError(string reason, bytes data);
+    error StateError(string reason);
+    error GasError(string reason, uint256 required, uint256 available);
+    error TimingError(string reason, uint256 required, uint256 current);
+    error TokenError(address token, string reason);
+    error PositionError(bytes32 pathHash, string reason);
+    error ValidationError(string message, string data);
+
+    // Function to receive ETH
+    receive() external payable {
+        // Convert received ETH to WPLS
+        IWPLS(WPLS).deposit{value: msg.value}();
+    }
+
+    // Function to handle fallback
+    fallback() external payable {
+        revert("Contract does not accept direct transactions");
+    }
+}
+
+    struct FlashLoanData {
+        address[] path;
+        address[] dexPath;
+        uint256 borrowAmount;
+        uint256 expectedProfit;
+        uint256 minAmountOut;
+        uint256[] dexFees;
+        bytes32 identifier;
+        uint256 deadline;
+        address initiator;
+        bool isActive;
+        uint256 startTime;
+        uint256 gasPrice;
+    }
+
+    struct Position {
+        uint256 entryPrice;
+        uint256 size;
+        uint256 leverage;
+        uint256 margin;
+        uint256 liquidationPrice;
+        bool isLong;
+        uint256 openTime;
+        uint256 lastUpdateTime;
+    }
+
+    struct CircuitBreaker {
+        uint256 priceDeviationLimit;
+        uint256 volumeAnomalyThreshold;
+        uint256 profitabilityThreshold;
+        uint256 gasSpikeTolerance;
+        uint256 lastResetTime;
+        bool isTriggered;
+        string lastTriggerReason;
+    }
+
+    // Core state variables
+    bool private _stakeReentryGuard;
+    bool private _emergencyLock;
+    bool private _maintenanceMode;
+
+    // Protocol interfaces
+    IPulseXRouter public immutable pulseXRouter;
+    IPulseXFactory public immutable pulseXFactory;
+    IWPLS public immutable wrapPLS;
+    ILendingPool public lendingPool;
+
+    // Core metrics
+    uint256 public totalExecutions;
+    uint256 public successfulExecutions;
+    uint256 public totalGasSpent;
+    uint256 public currentGasReserve;
+    uint256 public emergencyFund;
+    uint256 public totalStaked;
+    uint256 public totalProfit;
+    uint256 public flastLoanCapacity;
+    uint256 public dailyTrades;
+    uint256 public totalProtocolFees;
+    uint256 public totalDevFees;
+
+    // System tracking
+    uint256 public lastUpdateBlock;
+    uint256 public lastEmergencyAction;
+    uint256 public lastCircuitBreakerReset;
+    uint256 public consecutiveFailures;
+    uint256 public currentVersion;
+    uint256 public lastStakingUpdate;
+    uint256 public accumulatedRewardsPerToken;
+
+    // Core components
+    SelfFundingConfig public selfFundingConfig;
+    CircuitBreaker public circuitBreaker;
+
+    // Core mappings
+    mapping(bytes32 => FlashLoanData) public activeFlashLoans;
+    mapping(bytes32 => Position) public positions;
+    mapping(address => uint256) public flashLoanCount;
+    mapping(bytes32 => uint256) public pathFailures;
+    mapping(address => uint256) public tokenBlacklist;
+    mapping(address => uint256) public accumulatedRewards;
+    mapping(address => bool) public authorizedTokens;
+    mapping(address => bool) public authorizedDEXs;
+    mapping(bytes32 => uint256) public pathSuccessRate;
+
+    // Fee collectors
+    address public protocolFeeCollector;
+    address public devFeeCollector;
+
+    // Storage arrays
+    address[] public liquidityPositions;
+    address[] public tokenList;
+    bytes32[] public activePaths;
+    address[] public dexList;
+
+    // ============ Constructor & Initialization ============
+    constructor(address _admin, address _operator) 
+        Ownable(msg.sender) 
+    {
+        require(_admin != address(0), "Invalid admin address");
+        require(_operator != address(0), "Invalid operator address");
+
+        // Setup core interfaces
+        pulseXRouter = IPulseXRouter(PULSEX_ROUTER);
+        pulseXFactory = IPulseXFactory(PULSEX_FACTORY);
+        wrapPLS = IWPLS(WPLS);
+        lendingPool = ILendingPool(PULSEX_ROUTER);
+
+        // Setup fee collectors
+        protocolFeeCollector = GENESIS_WALLET;
+        devFeeCollector = GENESIS_WALLET;
+
+        // Initialize core components
+        _initializeBaseComponents();
+        
+        // Initialize advanced systems
+        _initializeAdvancedSystems();
+        
+        // Initialize self funding
+        _initializeSelfFunding();
+        
+        // Setup initial roles
+        _setupInitialRoles(_admin, _operator);
+        
+        // Initialize security
+        _initializeSecurity();
+    }
+
+    function _initializeBaseComponents() internal {
+        _emergencyLock = false;
+        _maintenanceMode = false;
+        _stakeReentryGuard = false;
+
+        // Initialize performance tracking
+        totalExecutions = 0;
+        successfulExecutions = 0;
+        totalProfit = 0;
+
+        // Set initial gas reserve
+        currentGasReserve = 5 ether;
+        emergencyFund = 0;
+
+        // Initialize state
+        lastUpdateBlock = block.number;
+        currentVersion = 1;
+
+        // Approve routers for WPLS
+        IERC20(WPLS).approve(PULSEX_ROUTER, type(uint256).max);
+    }
+
+    function _initializeAdvancedSystems() internal {
+        // Initialize circuit breaker
+        circuitBreaker = CircuitBreaker({
+            priceDeviationLimit: 300, // 3%
+            volumeAnomalyThreshold: 5000, // 50%
+            profitabilityThreshold: 1e15, // 0.001 PLS
+            gasSpikeTolerance: 200,
+            lastResetTime: block.timestamp,
+            isTriggered: false,
+            lastTriggerReason: ""
+        });
+    }
+
+    function _initializeSelfFunding() internal {
+        selfFundingConfig = SelfFundingConfig({
+            targetLiquidity: 100 ether,
+            minLiquidity: 10 ether,
+            maxLiquidity: 1000 ether,
+            reinvestmentRate: 7000,    // 70% reinvestment
+            emergencyThreshold: 20 ether,
+            lastRebalance: block.timestamp,
+            autoCompound: true
+        });
+
+        flastLoanCapacity = 0;
+    }
+
+    function _setupInitialRoles(address _admin, address _operator) internal {
+        _grantRole(DEFAULT_ADMIN_ROLE, _admin);
+        _grantRole(TIMELOCK_ADMIN_ROLE, _admin);
+        _grantRole(UPGRADE_ROLE, _admin);
+        _grantRole(OPERATOR_ROLE, _operator);
+        _grantRole(EMERGENCY_ADMIN_ROLE, _admin);
+        _grantRole(TREASURY_ROLE, _admin);
+    }
+
+    function _initializeSecurity() internal {
+        // Initialize core tokens
+        _initializeToken(WPLS, false, 0, 0, 0);
+        _initializeToken(PLSX, false, 0, 0, 0);
+        _initializeToken(INC, true, 0, 0, 0);
+        _initializeToken(HEX, false, 0, 0, 0);
+
+        // Authorize core DEX
+        authorizedDEXs[PULSEX_ROUTER] = true;
+        dexList.push(PULSEX_ROUTER);
+    }
+
+    function _initializeToken(
+        address token,
+        bool isTaxed,
+        uint256 buyTax,
+        uint256 sellTax,
+        uint256 transferTax
+    ) internal {
+        require(token != address(0), "Invalid token address");
+        require(!authorizedTokens[token], "Token already initialized");
+        
+        authorizedTokens[token] = true;
+        tokenList.push(token);
+
+        // Approve router
+        IERC20(token).approve(PULSEX_ROUTER, type(uint256).max);
+        
+        emit TokenInitialized(
+            token, 
+            isTaxed, 
+            buyTax,
+            sellTax,
+            transferTax,
+            block.timestamp
+        );
+    }
+
+    // Events for initialization tracking
+    event TokenInitialized(
+        address indexed token,
+        bool isTaxed,
+        uint256 buyTax,
+        uint256 sellTax,
+        uint256 transferTax,
+        uint256 timestamp
+    );
+
+    // ============ Core Arbitrage Functions ============
+    
+    struct ArbitrageParameters {
+        address[] path;
+        uint256[] amounts;
+        uint256 expectedProfit;
+        uint256 minAmountOut;
+        uint256 deadline;
+        bool useFlashLoan;
+        bytes32 identifier;
+    }
+
+    /**
+     * @notice Execute arbitrage opportunity
+     * @param params Arbitrage parameters
+     * @return profit Amount of profit generated
+     */
+    function executeArbitrage(
+        ArbitrageParameters calldata params
+    ) 
+        external 
+        onlyOperator 
+        nonReentrant 
+        whenNotPaused 
+        validatePath(params.path)
+        returns (uint256 profit) 
+    {
+        require(tx.gasprice <= MAX_GAS_PRICE, "Gas price too high");
+        require(params.path.length >= 2 && params.path.length == params.amounts.length, "Invalid parameters");
+        require(block.timestamp <= params.deadline, "Deadline expired");
+        
+        // Verify system state
+        require(_validateSystemHealth(), "System unhealthy");
+        require(!circuitBreaker.isTriggered, "Circuit breaker active");
+
+        // Record initial state
+        uint256 startGas = gasleft();
+        bytes32 startState = _calculateMarketState(params.path);
+
+        // Execute based on strategy
+        if (params.useFlashLoan) {
+            profit = _executeWithFlashLoan(params);
+        } else {
+            profit = _executeStandardArbitrage(params);
+        }
+
+        // Process profit if successful
+        if (profit > 0) {
+            // Update metrics
+            totalExecutions++;
+            successfulExecutions++;
+            totalGasSpent += startGas - gasleft();
+            
+            // Process fees and profits
+            profit = _processArbitrageProfit(profit);
+
+            emit ArbitrageExecuted(
+                params.identifier,
+                params.path,
+                params.amounts[0],
+                profit,
+                startGas - gasleft(),
+                params.useFlashLoan,
+                block.timestamp
+            );
+        }
+
+        // Verify final state
+        bytes32 endState = _calculateMarketState(params.path);
+        emit MarketStateChanged(
+            params.identifier,
+            startState,
+            endState,
+            block.timestamp
+        );
+
+        return profit;
+    }
+
+    /**
+     * @notice Execute standard arbitrage without flash loan
+     * @param params Arbitrage parameters
+     * @return profit Amount of profit generated
+     */
+    function _executeStandardArbitrage(
+        ArbitrageParameters memory params
+    ) internal returns (uint256) {
+        uint256 initialBalance = IERC20(params.path[0]).balanceOf(address(this));
+        require(initialBalance >= params.amounts[0], "Insufficient balance");
+
+        // Execute trades
+        bool success = _executeArbitragePath(
+            params.path,
+            params.amounts[0],
+            params.minAmountOut
+        );
+
+        require(success, "Trade execution failed");
+
+        // Calculate profit
+        uint256 finalBalance = IERC20(params.path[0]).balanceOf(address(this));
+        require(finalBalance > initialBalance, "No profit generated");
+
+        return finalBalance - initialBalance;
+    }
+
+    /**
+     * @notice Execute arbitrage path
+     * @param path Token path
+     * @param initialAmount Initial amount
+     * @param minAmountOut Minimum output amount
+     * @return Whether execution was successful
+     */
+    function _executeArbitragePath(
+        address[] memory path,
+        uint256 initialAmount,
+        uint256 minAmountOut
+    ) internal returns (bool) {
+        uint256 currentAmount = initialAmount;
+
+        // Execute trades through the path
+        for (uint256 i = 0; i < path.length - 1; i++) {
+            // Find optimal router for the pair
+            address router = _findOptimalRouter(
+                path[i],
+                path[i + 1],
+                currentAmount
+            );
+
+            // Apply MEV protection
+            require(
+                !_detectMEVAttack(path, currentAmount),
+                "MEV attack detected"
+            );
+
+            // Execute swap
+            currentAmount = _executeSwap(
+                router,
+                path[i],
+                path[i + 1],
+                currentAmount,
+                0 // Use minimal output to pass through path
+            );
+
+            if (currentAmount == 0) {
+                return false;
+            }
+        }
+
+        // Verify final output meets minimum
+        return currentAmount >= minAmountOut;
+    }
+
+    /**
+     * @notice Execute single swap
+     * @param router Router to use
+     * @param tokenIn Input token
+     * @param tokenOut Output token
+     * @param amountIn Input amount
+     * @param minAmountOut Minimum output amount
+     * @return Amount received from swap
+     */
+    function _executeSwap(
+        address router,
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 minAmountOut
+    ) internal returns (uint256) {
+        // Record initial balance
+        uint256 balanceBefore = IERC20(tokenOut).balanceOf(address(this));
+
+        // Setup path
+        address[] memory path = new address[](2);
+        path[0] = tokenIn;
+        path[1] = tokenOut;
+
+        // Execute swap
+        try IPulseXRouter(router).swapExactTokensForTokensSupportingFeeOnTransferTokens(
+            amountIn,
+            minAmountOut,
+            path,
+            address(this),
+            block.timestamp + 2 // 2 blocks deadline
+        ) {
+            uint256 balanceAfter = IERC20(tokenOut).balanceOf(address(this));
+            uint256 outputAmount = balanceAfter - balanceBefore;
+
+            require(outputAmount >= minAmountOut, "Insufficient output");
+
+            return outputAmount;
+        } catch {
+            return 0;
+        }
+    }
+
+    /**
+     * @notice Calculate market state
+     * @param path Token path
+     * @return State hash
+     */
+    function _calculateMarketState(
+        address[] memory path
+    ) internal view returns (bytes32) {
+        bytes memory stateData;
+
+        // Collect reserves for each pair
+        for (uint256 i = 0; i < path.length - 1; i++) {
+            (uint112 reserve0, uint112 reserve1,) = IPulseXPair(
+                IPulseXFactory(PULSEX_FACTORY).getPair(path[i], path[i + 1])
+            ).getReserves();
+
+            stateData = abi.encodePacked(
+                stateData,
+                reserve0,
+                reserve1
+            );
+        }
+
+        return keccak256(stateData);
+    }
+
+    // Core arbitrage events
+    event ArbitrageExecuted(
+        bytes32 indexed identifier,
+        address[] path,
+        uint256 inputAmount,
+        uint256 profit,
+        uint256 gasUsed,
+        bool withFlashLoan,
+        uint256 timestamp
+    );
+
+    event MarketStateChanged(
+        bytes32 indexed identifier,
+        bytes32 startState,
+        bytes32 endState,
+        uint256 timestamp
+    );
+
+    // ============ Flash Loan Functions ============
+    
+    /**
+     * @notice Execute arbitrage with flash loan
+     * @param params Arbitrage parameters
+     * @return profit Amount of profit generated
+     */
+    function _executeWithFlashLoan(
+        ArbitrageParameters memory params
+    ) internal returns (uint256) {
+        // Calculate flash loan requirements
+        uint256 flashLoanFee = (params.amounts[0] * FLASH_LOAN_FEE) / BASIS_POINTS;
+        uint256 totalRequired = params.amounts[0] + flashLoanFee;
+
+        // Store flash loan data
+        activeFlashLoans[params.identifier] = FlashLoanData({
+            path: params.path,
+            dexPath: new address[](params.path.length - 1),
+            borrowAmount: params.amounts[0],
+            expectedProfit: params.expectedProfit,
+            minAmountOut: params.minAmountOut,
+            dexFees: new uint256[](params.path.length - 1),
+            identifier: params.identifier,
+            deadline: params.deadline,
+            initiator: msg.sender,
+            isActive: true,
+            startTime: block.timestamp,
+            gasPrice: tx.gasprice
+        });
+
+        // Verify flash loan capacity
+        require(
+            params.amounts[0] <= flastLoanCapacity,
+            "Exceeds flash loan capacity"
+        );
+        require(
+            flashLoanCount[params.path[0]] < 3,
+            "Flash loan rate limit exceeded"
+        );
+
+        // Execute flash loan
+        try lendingPool.flashLoanSimple(
+            address(this),
+            params.path[0],
+            params.amounts[0],
+            abi.encode(params.identifier),
+            0
+        ) {
+            // Calculate actual profit
+            uint256 endBalance = IERC20(params.path[0]).balanceOf(address(this));
+            uint256 profit = endBalance > totalRequired ? endBalance - totalRequired : 0;
+
+            // Cleanup flash loan data
+            delete activeFlashLoans[params.identifier];
+
+            emit FlashLoanExecuted(
+                params.identifier,
+                params.path[0],
+                params.amounts[0],
+                flashLoanFee,
+                profit,
+                block.timestamp
+            );
+
+            return profit;
+        } catch (bytes memory reason) {
+            // Cleanup on failure
+            delete activeFlashLoans[params.identifier];
+            
+            emit FlashLoanFailed(
+                params.identifier,
+                "Flash loan execution failed",
+                reason,
+                block.timestamp
+            );
+            
+            return 0;
+        }
+    }
+
+    /**
+     * @notice Flash loan callback function
+     * @dev Called by lending pool after flash loan
+     */
+    function executeOperation(
+        address asset,
+        uint256 amount,
+        uint256 premium,
+        address initiator,
+        bytes calldata params
+    ) external override returns (bool) {
+        require(msg.sender == address(lendingPool), "Unauthorized");
+        
+        // Decode flash loan data
+        bytes32 loanId = abi.decode(params, (bytes32));
+        FlashLoanData storage loan = activeFlashLoans[loanId];
+        require(loan.isActive, "Invalid loan");
+        
+        // Calculate required repayment
+        uint256 repayAmount = amount + premium;
+        
+        // Execute arbitrage path
+        bool success = _executeArbitragePath(
+            loan.path,
+            amount,
+            loan.minAmountOut
+        );
+        
+        require(success, "Arbitrage execution failed");
+        
+        // Verify profit covers flash loan fee
+        uint256 finalBalance = IERC20(asset).balanceOf(address(this));
+        require(finalBalance >= repayAmount, "Insufficient profit");
+        
+        // Approve repayment
+        IERC20(asset).approve(address(lendingPool), repayAmount);
+        
+        return true;
+    }
+
+    /**
+     * @notice Update flash loan capacity
+     * @param newCapacity New flash loan capacity
+     */
+    function updateFlashLoanCapacity(
+        uint256 newCapacity
+    ) external onlyRole(OPERATOR_ROLE) {
+        require(newCapacity > 0, "Invalid capacity");
+        
+        uint256 oldCapacity = flastLoanCapacity;
+        flastLoanCapacity = newCapacity;
+        
+        emit FlashLoanCapacityUpdated(
+            oldCapacity,
+            newCapacity,
+            block.timestamp
+        );
+    }
+
+    // Flash loan events
+    event FlashLoanExecuted(
+        bytes32 indexed identifier,
+        address asset,
+        uint256 amount,
+        uint256 fee,
+        uint256 profit,
+        uint256 timestamp
+    );
+
+    event FlashLoanFailed(
+        bytes32 indexed identifier,
+        string reason,
+        bytes errorData,
+        uint256 timestamp
+    );
+
+    event FlashLoanCapacityUpdated(
+        uint256 oldCapacity,
+        uint256 newCapacity,
+        uint256 timestamp
+    );
+
+    // ============ Trading & Path Execution Functions ============
+
+    /**
+     * @notice Find optimal router for token pair
+     * @param tokenA First token
+     * @param tokenB Second token
+     * @param amount Trade amount
+     */
+    function _findOptimalRouter(
+        address tokenA,
+        address tokenB,
+        uint256 amount
+    ) internal view returns (address) {
+        address bestRouter = PULSEX_ROUTER;
+        uint256 bestScore = 0;
+
+        for (uint256 i = 0; i < dexList.length; i++) {
+            address router = dexList[i];
+            if (!authorizedDEXs[router]) continue;
+
+            uint256 score = _calculateRouterScore(
+                router,
+                tokenA,
+                tokenB,
+                amount
+            );
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestRouter = router;
+            }
+        }
+
+        return bestRouter;
+    }
+
+    /**
+     * @notice Calculate router score based on performance metrics
+     * @param router Router address
+     * @param tokenA First token
+     * @param tokenB Second token
+     * @param amount Trade amount
+     */
+    function _calculateRouterScore(
+        address router,
+        address tokenA,
+        address tokenB,
+        uint256 amount
+    ) internal view returns (uint256) {
+        // Get reserves
+        (uint256 reserveA, uint256 reserveB) = _getRouterReserves(
+            router, 
+            tokenA, 
+            tokenB
+        );
+
+        if (reserveA == 0 || reserveB == 0) return 0;
+
+        // Calculate base score from liquidity
+        uint256 score = Math.sqrt(reserveA * reserveB);
+        
+        // Adjust for price impact
+        uint256 impact = (amount * BASIS_POINTS) / Math.min(reserveA, reserveB);
+        if (impact > MAX_SLIPPAGE) return 0;
+        score = score * (BASIS_POINTS - impact) / BASIS_POINTS;
+
+        // Adjust for historical performance
+        uint256 pathHash = uint256(keccak256(abi.encodePacked(router, tokenA, tokenB)));
+        score = score * (BASIS_POINTS + pathSuccessRate[bytes32(pathHash)]) / BASIS_POINTS;
+
+        return score;
+    }
+
+    /**
+     * @notice Get router reserves for token pair
+     * @param router Router to check
+     * @param tokenA First token
+     * @param tokenB Second token
+     */
+    function _getRouterReserves(
+        address router,
+        address tokenA,
+        address tokenB
+    ) internal view returns (uint256 reserveA, uint256 reserveB) {
+        address pair = IPulseXFactory(IPulseXRouter(router).factory())
+            .getPair(tokenA, tokenB);
+        
+        if (pair == address(0)) return (0, 0);
+
+        (uint112 reserve0, uint112 reserve1,) = IPulseXPair(pair).getReserves();
+        
+        return tokenA < tokenB ? 
+            (uint256(reserve0), uint256(reserve1)) : 
+            (uint256(reserve1), uint256(reserve0));
+    }
+
+    /**
+     * @notice Validate and optimize trade path
+     * @param path Token path
+     * @param amounts Trade amounts
+     */
+    function _validateAndOptimizePath(
+        address[] memory path,
+        uint256[] memory amounts
+    ) internal view returns (bool valid, uint256[] memory optimized) {
+        optimized = new uint256[](amounts.length);
+        optimized[0] = amounts[0];
+
+        for (uint256 i = 0; i < path.length - 1; i++) {
+            // Get optimal router and reserves
+            address router = _findOptimalRouter(path[i], path[i+1], optimized[i]);
+            (uint256 reserveIn, uint256 reserveOut) = _getRouterReserves(
+                router,
+                path[i],
+                path[i+1]
+            );
+
+            // Validate liquidity
+            if (reserveIn < MIN_LIQUIDITY || reserveOut < MIN_LIQUIDITY) {
+                return (false, optimized);
+            }
+
+            // Calculate optimal output
+            try IPulseXRouter(router).getAmountsOut(
+                optimized[i],
+                _getPathSegment(path[i], path[i+1])
+            ) returns (uint256[] memory amountsOut) {
+                optimized[i+1] = amountsOut[1];
+            } catch {
+                return (false, optimized);
+            }
+        }
+
+        return (true, optimized);
+    }
+
+    /**
+     * @notice Create path segment for router
+     * @param tokenA First token
+     * @param tokenB Second token
+     */
+    function _getPathSegment(
+        address tokenA,
+        address tokenB
+    ) internal pure returns (address[] memory) {
+        address[] memory segment = new address[](2);
+        segment[0] = tokenA;
+        segment[1] = tokenB;
+        return segment;
+    }
+
+    /**
+     * @notice Update path metrics after execution
+     * @param path Token path
+     * @param success Whether execution was successful
+     * @param profit Amount of profit generated
+     */
+    function _updatePathMetrics(
+        address[] memory path,
+        bool success,
+        uint256 profit
+    ) internal {
+        bytes32 pathHash = keccak256(abi.encodePacked(path));
+        
+        if (success) {
+            // Update success rate
+            uint256 failures = pathFailures[pathHash];
+            if (failures > 0) pathFailures[pathHash]--;
+            
+            // Update success metrics
+            pathSuccessRate[pathHash] = _calculateUpdatedSuccessRate(
+                pathSuccessRate[pathHash],
+                BASIS_POINTS,
+                failures
+            );
+        } else {
+            pathFailures[pathHash]++;
+            
+            // Trigger circuit breaker if too many failures
+            if (pathFailures[pathHash] >= 3) {
+                _triggerCircuitBreaker("Excessive path failures");
+            }
+        }
+
+        emit PathMetricsUpdated(
+            pathHash,
+            success,
+            profit,
+            pathFailures[pathHash],
+            block.timestamp
+        );
+    }
+
+    /**
+     * @notice Calculate updated success rate
+     * @param currentRate Current success rate
+     * @param newValue New value (BASIS_POINTS for success, 0 for failure)
+     * @param failures Number of failures
+     */
+    function _calculateUpdatedSuccessRate(
+        uint256 currentRate,
+        uint256 newValue,
+        uint256 failures
+    ) internal pure returns (uint256) {
+        if (failures == 0) return newValue;
+        return (currentRate * failures + newValue) / (failures + 1);
+    }
+
+    // Trading events
+    event PathMetricsUpdated(
+        bytes32 indexed pathHash,
+        bool success,
+        uint256 profit,
+        uint256 failures,
+        uint256 timestamp
+    );
+
+    // ============ Self-Funding Management ============
+
+    /**
+     * @notice Process and distribute arbitrage profit
+     * @param profit Amount of profit to process
+     * @return remainingProfit Profit after fees and distributions
+     */
+    function _processArbitrageProfit(uint256 profit) internal returns (uint256) {
+        if (profit == 0) return 0;
+
+        // Calculate fee allocations
+        uint256 protocolFeeAmount = (profit * PROTOCOL_FEE) / BASIS_POINTS;
+        uint256 devFeeAmount = (profit * DEV_FEE) / BASIS_POINTS;
+        uint256 stakingReward = (profit * 2000) / BASIS_POINTS; // 20% to staking
+        
+        // Process protocol fee
+        if (protocolFeeAmount > 0) {
+            totalProtocolFees += protocolFeeAmount;
+            require(
+                IERC20(WPLS).transfer(protocolFeeCollector, protocolFeeAmount),
+                "Protocol fee transfer failed"
+            );
+        }
+
+        // Process dev fee
+        if (devFeeAmount > 0) {
+            totalDevFees += devFeeAmount;
+            require(
+                IERC20(WPLS).transfer(devFeeCollector, devFeeAmount),
+                "Dev fee transfer failed"
+            );
+        }
+
+        // Process staking rewards
+        if (stakingReward > 0 && totalStaked > 0) {
+            _distributeStakingRewards(stakingReward);
+        }
+
+        // Calculate remaining profit for self-funding
+        uint256 remainingProfit = profit 
+            - protocolFeeAmount 
+            - devFeeAmount 
+            - stakingReward;
+            
+        // Process self-funding allocations
+        _processSelfFunding(remainingProfit);
+
+        emit ProfitProcessed(
+            profit,
+            protocolFeeAmount,
+            devFeeAmount,
+            stakingReward,
+            remainingProfit,
+            block.timestamp
+        );
+
+        return remainingProfit;
+    }
+
+    /**
+     * @notice Process self-funding allocations
+     * @param profit Amount to allocate
+     */
+    function _processSelfFunding(uint256 profit) internal {
+        if (profit == 0) return;
+
+        // Calculate optimal allocations
+        (uint256 flashLoanAllocation, uint256 liquidityAllocation) = 
+            _calculateOptimalAllocations(profit);
+
+        // Process flash loan pool allocation
+        if (flashLoanAllocation > 0) {
+            _addToFlashLoanPool(flashLoanAllocation);
+        }
+
+        // Process liquidity pool allocation
+        if (liquidityAllocation > 0) {
+            _addToLiquidityPool(liquidityAllocation);
+        }
+
+        // Update emergency fund if needed
+        if (emergencyFund < selfFundingConfig.emergencyThreshold) {
+            uint256 emergencyAllocation = (profit * 1000) / BASIS_POINTS; // 10%
+            emergencyFund += emergencyAllocation;
+            emit EmergencyFundUpdated(emergencyFund, emergencyAllocation, block.timestamp);
+        }
+
+        emit SelfFundingProcessed(
+            profit,
+            flashLoanAllocation,
+            liquidityAllocation,
+            block.timestamp
+        );
+    }
+
+    /**
+     * @notice Calculate optimal profit allocations
+     * @param profit Total profit to allocate
+     * @return flashLoanAllocation Amount for flash loan pool
+     * @return liquidityAllocation Amount for liquidity pool
+     */
+    function _calculateOptimalAllocations(uint256 profit) 
+        internal 
+        view 
+        returns (uint256 flashLoanAllocation, uint256 liquidityAllocation) 
+    {
+        uint256 currentLiquidity = _calculateTotalLiquidity();
+        uint256 baseReinvestRate = selfFundingConfig.reinvestmentRate;
+
+        // Adjust reinvestment rate based on current liquidity
+        if (currentLiquidity < selfFundingConfig.targetLiquidity) {
+            // Increase reinvestment when below target
+            uint256 deficit = selfFundingConfig.targetLiquidity - currentLiquidity;
+            baseReinvestRate += (deficit * 1000) / selfFundingConfig.targetLiquidity;
+        } else if (currentLiquidity > selfFundingConfig.maxLiquidity) {
+            // Decrease reinvestment when above max
+            baseReinvestRate = (baseReinvestRate * 8000) / BASIS_POINTS; // 20% reduction
+        }
+
+        uint256 totalReinvestment = (profit * baseReinvestRate) / BASIS_POINTS;
+        
+        // Split between flash loan pool and liquidity
+        flashLoanAllocation = (totalReinvestment * 6000) / BASIS_POINTS; // 60%
+        liquidityAllocation = totalReinvestment - flashLoanAllocation;
+
+        return (flashLoanAllocation, liquidityAllocation);
+    }
+
+    /**
+     * @notice Add funds to flash loan pool
+     * @param amount Amount to add
+     */
+    function _addToFlashLoanPool(uint256 amount) internal {
+        if (amount == 0) return;
+
+        // Convert to WPLS if needed
+        if (address(this).balance >= amount) {
+            IWPLS(WPLS).deposit{value: amount}();
+        }
+
+        // Update flash loan capacity
+        flastLoanCapacity += amount;
+
+        emit FlashLoanPoolUpdated(
+            flastLoanCapacity,
+            amount,
+            block.timestamp
+        );
+    }
+
+    /**
+     * @notice Add funds to liquidity pool
+     * @param amount Amount to add
+     */
+    function _addToLiquidityPool(uint256 amount) internal {
+        if (amount == 0) return;
+
+        // Convert to WPLS if needed
+        if (address(this).balance >= amount) {
+            IWPLS(WPLS).deposit{value: amount}();
+        }
+
+        // Find optimal pools for liquidity
+        address[] memory optimalPools = _findOptimalLiquidityPools();
+        uint256 amountPerPool = amount / optimalPools.length;
+
+        for (uint256 i = 0; i < optimalPools.length; i++) {
+            _addLiquidityToPool(optimalPools[i], amountPerPool);
+        }
+    }
+
+    /**
+     * @notice Find optimal pools for liquidity
+     */
+    function _findOptimalLiquidityPools() internal view returns (address[] memory) {
+        uint256 poolCount = 0;
+        address[] memory pools = new address[](dexList.length);
+
+        // Find pools meeting criteria
+        for (uint256 i = 0; i < dexList.length; i++) {
+            address router = dexList[i];
+            if (_validatePoolQuality(router)) {
+                pools[poolCount] = router;
+                poolCount++;
+            }
+        }
+
+        // Create right-sized array
+        address[] memory optimalPools = new address[](poolCount);
+        for (uint256 i = 0; i < poolCount; i++) {
+            optimalPools[i] = pools[i];
+        }
+
+        return optimalPools;
+    }
+
+    /**
+     * @notice Calculate total protocol liquidity
+     */
+    function _calculateTotalLiquidity() internal view returns (uint256) {
+        uint256 total = flastLoanCapacity;  // Flash loan pool
+
+        // Add liquidity positions
+        for (uint256 i = 0; i < liquidityPositions.length; i++) {
+            total += _getLiquidityPositionValue(liquidityPositions[i]);
+        }
+
+        // Add available balance
+        total += IERC20(WPLS).balanceOf(address(this));
+        total += address(this).balance;
+
+        return total;
+    }
+
+    /**
+     * @notice Get liquidity position value
+     * @param lpToken LP token address
+     */
+    function _getLiquidityPositionValue(address lpToken) internal view returns (uint256) {
+        uint256 balance = IERC20(lpToken).balanceOf(address(this));
+        if (balance == 0) return 0;
+
+        // Get underlying tokens
+        address token0 = IPulseXPair(lpToken).token0();
+        address token1 = IPulseXPair(lpToken).token1();
+
+        // Get reserves
+        (uint112 reserve0, uint112 reserve1,) = IPulseXPair(lpToken).getReserves();
+        uint256 totalSupply = IERC20(lpToken).totalSupply();
+
+        // Calculate share of reserves
+        uint256 share0 = (balance * uint256(reserve0)) / totalSupply;
+        uint256 share1 = (balance * uint256(reserve1)) / totalSupply;
+
+        // Convert to common denominator (WPLS)
+        return share0 + share1;
+    }
+
+    // Self-funding events
+    event ProfitProcessed(
+        uint256 totalProfit,
+        uint256 protocolFee,
+        uint256 devFee,
+        uint256 stakingReward,
+        uint256 remainingProfit,
+        uint256 timestamp
+    );
+
+    event SelfFundingProcessed(
+        uint256 totalProfit,
+        uint256 flashLoanAllocation,
+        uint256 liquidityAllocation,
+        uint256 timestamp
+    );
+
+    event EmergencyFundUpdated(
+        uint256 newBalance,
+        uint256 added,
+        uint256 timestamp
+    );
+
+    event FlashLoanPoolUpdated(
+        uint256 newCapacity,
+        uint256 added,
+        uint256 timestamp
+    );
+
+    // ============ Risk Management & Validation ============
+    
+    /**
+     * @notice Risk thresholds configuration
+     */
+    struct RiskThresholds {
+        uint256 maxPositionSize;      // Maximum size per position
+        uint256 maxExposurePerToken;  // Maximum exposure per token
+        uint256 minProfitRatio;       // Minimum profit vs gas cost ratio
+        uint256 maxSlippageImpact;    // Maximum allowed slippage
+        uint256 minLiquidityRatio;    // Minimum liquidity vs position size
+    }
+
+    RiskThresholds public riskThresholds;
+
+    /**
+     * @notice Validate system health
+     * @return Whether system is healthy
+     */
+    function _validateSystemHealth() internal view returns (bool) {
+        // Check core balance requirements
+        require(
+            address(this).balance >= emergencyFund,
+            "Emergency fund depleted"
+        );
+        require(
+            currentGasReserve >= _calculateMinimumGasReserve(),
+            "Insufficient gas reserve"
+        );
+
+        // Validate execution metrics
+        require(
+            successfulExecutions <= totalExecutions,
+            "Invalid execution metrics"
+        );
+        require(
+            dailyTrades <= MAX_DAILY_TRADES,
+            "Daily trade limit exceeded"
+        );
+
+        // Check active flash loans
+        for (uint256 i = 0; i < activePaths.length; i++) {
+            bytes32 pathHash = activePaths[i];
+            FlashLoanData storage loan = activeFlashLoans[pathHash];
+            if (loan.isActive) {
+                require(
+                    loan.deadline > block.timestamp,
+                    "Active loan expired"
+                );
+                require(
+                    loan.borrowAmount <= flastLoanCapacity,
+                    "Loan exceeds capacity"
+                );
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @notice Validate risk parameters for trade
+     * @param path Token path
+     * @param amount Trade amount
+     * @param expectedProfit Expected profit
+     */
+    function _validateRiskParameters(
+        address[] memory path,
+        uint256 amount,
+        uint256 expectedProfit
+    ) internal view returns (bool) {
+        // Check position size
+        require(
+            amount <= _calculateMaxPosition(path[0]),
+            "Position size too large"
+        );
+
+        // Check token exposure
+        require(
+            _calculateTotalExposure(path[0]) + amount <= riskThresholds.maxExposurePerToken,
+            "Token exposure too high"
+        );
+
+        // Check profit ratio vs gas cost
+        uint256 estimatedGas = 500000; // Base gas estimate
+        uint256 gasCost = estimatedGas * tx.gasprice;
+        require(
+            expectedProfit >= gasCost * riskThresholds.minProfitRatio / BASIS_POINTS,
+            "Insufficient profit ratio"
+        );
+
+        return true;
+    }
+
+    /**
+     * @notice Calculate maximum position size for token
+     * @param token Token address
+     */
+    function _calculateMaxPosition(address token) internal view returns (uint256) {
+        uint256 poolSize = _getPoolSize(token);
+        return (poolSize * riskThresholds.maxPositionSize) / BASIS_POINTS;
+    }
+
+    /**
+     * @notice Calculate total token exposure
+     * @param token Token address
+     */
+    function _calculateTotalExposure(address token) internal view returns (uint256) {
+        uint256 totalExposure = 0;
+
+        // Sum active flash loans
+        for (uint256 i = 0; i < activePaths.length; i++) {
+            bytes32 pathHash = activePaths[i];
+            FlashLoanData storage loan = activeFlashLoans[pathHash];
+            if (loan.isActive && loan.path[0] == token) {
+                totalExposure += loan.borrowAmount;
+            }
+        }
+
+        // Add liquidity positions
+        for (uint256 i = 0; i < liquidityPositions.length; i++) {
+            address lpToken = liquidityPositions[i];
+            if (IPulseXPair(lpToken).token0() == token || 
+                IPulseXPair(lpToken).token1() == token) {
+                totalExposure += _getLiquidityPositionValue(lpToken) / 2;
+            }
+        }
+
+        return totalExposure;
+    }
+
+    /**
+     * @notice Calculate minimum gas reserve
+     */
+    function _calculateMinimumGasReserve() internal view returns (uint256) {
+        return (address(this).balance * GAS_RESERVE_BPS) / BASIS_POINTS;
+    }
+
+    /**
+     * @notice Get pool size for token
+     * @param token Token address
+     */
+    function _getPoolSize(address token) internal view returns (uint256) {
+        address pair = IPulseXFactory(PULSEX_FACTORY).getPair(token, WPLS);
+        if (pair == address(0)) return 0;
+
+        (uint112 reserve0, uint112 reserve1,) = IPulseXPair(pair).getReserves();
+        return token < WPLS ? uint256(reserve0) : uint256(reserve1);
+    }
+
+    /**
+     * @notice Update risk thresholds
+     * @param newThresholds New risk thresholds
+     */
+    function updateRiskThresholds(
+        RiskThresholds calldata newThresholds
+    ) external onlyRole(TIMELOCK_ADMIN_ROLE) {
+        require(
+            newThresholds.maxPositionSize <= BASIS_POINTS,
+            "Invalid position size limit"
+        );
+        require(
+            newThresholds.minProfitRatio >= 110,  // 110% minimum profit ratio
+            "Invalid profit ratio"
+        );
+        require(
+            newThresholds.maxSlippageImpact <= 1000, // Max 10% slippage
+            "Invalid slippage limit"
+        );
+
+        emit RiskThresholdsUpdated(
+            riskThresholds.maxPositionSize,
+            newThresholds.maxPositionSize,
+            block.timestamp
+        );
+
+        riskThresholds = newThresholds;
+    }
+
+    /**
+     * @notice Validate pool quality
+     * @param router Router to validate
+     */
+    function _validatePoolQuality(address router) internal view returns (bool) {
+        // Check router authorization
+        if (!authorizedDEXs[router]) return false;
+
+        // Calculate success rate
+        uint256 successRate = successfulExecutions * BASIS_POINTS / 
+            (totalExecutions > 0 ? totalExecutions : 1);
+            
+        if (successRate < 8000) return false; // Require 80% success
+
+        // Check minimum liquidity
+        if (_calculateTotalLiquidity() < MIN_LIQUIDITY) return false;
+
+        return true;
+    }
+
+    // Risk management events
+    event RiskThresholdsUpdated(
+        uint256 oldMaxPosition,
+        uint256 newMaxPosition,
+        uint256 timestamp
+    );
+
+    // ============ MEV Protection ============
+
+    struct MEVProtectionConfig {
+        uint256 backrunThreshold;     // Threshold for backrun detection
+        uint256 frontrunThreshold;    // Threshold for frontrun detection
+        uint256 sandwichThreshold;    // Threshold for sandwich attack detection
+        uint256 blockWindow;          // Block window for pattern detection
+        bool active;                  // Whether protection is active
+    }
+
+    struct MEVProtectionMetrics {
+        uint256[] backrunHistory;     // Historical backrun patterns
+        uint256[] frontrunHistory;    // Historical frontrun patterns
+        uint256 sandwichCount;        // Detected sandwich attacks
+        uint256 lastBlockAnalyzed;    // Last block analyzed
+        mapping(bytes32 => uint256) patternTimestamps;  // Pattern detection timestamps
+    }
+
+    MEVProtectionConfig public mevConfig;
+    MEVProtectionMetrics private mevMetrics;
+
+    /**
+     * @notice Initialize MEV protection
+     */
+    function _initializeMEVProtection() internal {
+        mevConfig = MEVProtectionConfig({
+            backrunThreshold: 500,     // 5% threshold
+            frontrunThreshold: 700,    // 7% threshold
+            sandwichThreshold: 300,    // 3% threshold
+            blockWindow: 10,           // 10 block window
+            active: true
+        });
+
+        mevMetrics.lastBlockAnalyzed = block.number;
+    }
+
+    /**
+     * @notice Detect MEV attacks in transaction
+     * @param path Trading path
+     * @param amount Trade amount
+     */
+    function _detectMEVAttack(
+        address[] memory path,
+        uint256 amount
+    ) internal returns (bool) {
+        if (!mevConfig.active) return false;
+
+        // Calculate risk scores
+        uint256 backrunRisk = _calculateBackrunRisk(path, amount);
+        uint256 frontrunRisk = _calculateFrontrunRisk(path);
+        uint256 sandwichRisk = _calculateSandwichRisk(path, amount);
+
+        // Record metrics
+        _recordMEVMetrics(backrunRisk, frontrunRisk, sandwichRisk);
+
+        // Check if any risk exceeds thresholds
+        if (backrunRisk >= mevConfig.backrunThreshold ||
+            frontrunRisk >= mevConfig.frontrunThreshold ||
+            sandwichRisk >= mevConfig.sandwichThreshold) {
+                
+            emit MEVAttackDetected(
+                keccak256(abi.encodePacked(path, amount, block.number)),
+                path,
+                amount,
+                backrunRisk + frontrunRisk + sandwichRisk,
+                block.timestamp
+            );
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @notice Calculate backrun risk score
+     * @param path Trading path
+     * @param amount Trade amount
+     */
+    function _calculateBackrunRisk(
+        address[] memory path,
+        uint256 amount
+    ) internal view returns (uint256) {
+        uint256 riskScore = 0;
+
+        for (uint256 i = 0; i < path.length - 1; i++) {
+            // Calculate liquidity impact
+            (uint256 reserve0, uint256 reserve1) = _getRouterReserves(
+                PULSEX_ROUTER,
+                path[i],
+                path[i + 1]
+            );
+
+            // Higher risk for larger price impact
+            uint256 impact = (amount * BASIS_POINTS) / Math.min(reserve0, reserve1);
+            riskScore = Math.max(riskScore, impact);
+
+            // Check for recent similar transactions
+            bytes32 pairHash = keccak256(abi.encodePacked(path[i], path[i + 1]));
+            uint256 recentPatterns = _countRecentPatterns(pairHash);
+            riskScore += recentPatterns * 100; // Add 1% per recent pattern
+        }
+
+        return Math.min(riskScore, BASIS_POINTS); // Cap at 100%
+    }
+
+    /**
+     * @notice Calculate frontrun risk score
+     * @param path Trading path
+     */
+    function _calculateFrontrunRisk(
+        address[] memory path
+    ) internal view returns (uint256) {
+        uint256 riskScore = 0;
+
+        for (uint256 i = 0; i < path.length - 1; i++) {
+            // Check historical frontrunning patterns
+            bytes32 pairHash = keccak256(abi.encodePacked(path[i], path[i + 1]));
+            
+            // Higher risk for historically frontrun pairs
+            for (uint256 j = 0; j < mevMetrics.frontrunHistory.length; j++) {
+                if (mevMetrics.frontrunHistory[j] == uint256(pairHash)) {
+                    riskScore += 200; // Add 2% per historical occurrence
+                }
+            }
+        }
+
+        return Math.min(riskScore, BASIS_POINTS);
+    }
+
+    /**
+     * @notice Calculate sandwich attack risk score
+     * @param path Trading path
+     * @param amount Trade amount
+     */
+    function _calculateSandwichRisk(
+        address[] memory path,
+        uint256 amount
+    ) internal view returns (uint256) {
+        uint256 riskScore = 0;
+
+        // Check recent block patterns
+        for (uint256 i = 0; i < path.length - 1; i++) {
+            bytes32 pairHash = keccak256(abi.encodePacked(path[i], path[i + 1]));
+            
+            // Analyze recent blocks
+            for (uint256 j = 1; j <= mevConfig.blockWindow; j++) {
+                bytes32 blockPattern = keccak256(abi.encodePacked(
+                    blockhash(block.number - j),
+                    pairHash
+                ));
+                
+                if (mevMetrics.patternTimestamps[blockPattern] > 0) {
+                    riskScore += 150; // Add 1.5% per detected pattern
+                }
+            }
+        }
+
+        return Math.min(riskScore, BASIS_POINTS);
+    }
+
+    /**
+     * @notice Count recent MEV patterns
+     * @param pairHash Hash of token pair
+     */
+    function _countRecentPatterns(bytes32 pairHash) internal view returns (uint256) {
+        uint256 count = 0;
+        uint256 startBlock = Math.max(block.number - mevConfig.blockWindow, mevMetrics.lastBlockAnalyzed);
+
+        for (uint256 i = startBlock; i < block.number; i++) {
+            bytes32 blockPattern = keccak256(abi.encodePacked(blockhash(i), pairHash));
+            if (mevMetrics.patternTimestamps[blockPattern] > 0) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    /**
+     * @notice Record MEV metrics for analysis
+     * @param backrunRisk Backrun risk score
+     * @param frontrunRisk Frontrun risk score
+     * @param sandwichRisk Sandwich attack risk score 
+     */
+    function _recordMEVMetrics(
+        uint256 backrunRisk,
+        uint256 frontrunRisk,
+        uint256 sandwichRisk
+    ) internal {
+        // Record pattern if high risk detected
+        if (backrunRisk + frontrunRisk + sandwichRisk >= 1000) { // 10% combined risk
+            bytes32 pattern = keccak256(abi.encodePacked(
+                block.number,
+                backrunRisk,
+                frontrunRisk,
+                sandwichRisk
+            ));
+            
+            mevMetrics.patternTimestamps[pattern] = block.timestamp;
+            
+            if (sandwichRisk >= mevConfig.sandwichThreshold) {
+                mevMetrics.sandwichCount++;
+            }
+        }
+
+        emit MEVMetricsUpdated(
+            backrunRisk,
+            frontrunRisk,
+            sandwichRisk,
+            mevMetrics.sandwichCount,
+            block.timestamp
+        );
+    }
+
+    /**
+     * @notice Update MEV protection configuration
+     * @param newConfig New configuration settings
+     */
+    function updateMEVConfig(
+        MEVProtectionConfig calldata newConfig
+    ) external onlyRole(OPERATOR_ROLE) {
+        require(newConfig.blockWindow > 0, "Invalid block window");
+        require(newConfig.backrunThreshold <= BASIS_POINTS, "Invalid backrun threshold");
+        require(newConfig.frontrunThreshold <= BASIS_POINTS, "Invalid frontrun threshold");
+        require(newConfig.sandwichThreshold <= BASIS_POINTS, "Invalid sandwich threshold");
+
+        mevConfig = newConfig;
+
+        emit MEVConfigUpdated(
+            newConfig.backrunThreshold,
+            newConfig.frontrunThreshold,
+            newConfig.sandwichThreshold,
+            block.timestamp
+        );
+    }
+
+    // MEV Protection events
+    event MEVAttackDetected(
+        bytes32 indexed patternHash,
+        address[] path,
+        uint256 amount,
+        uint256 riskScore,
+        uint256 timestamp
+    );
+
+    event MEVMetricsUpdated(
+        uint256 backrunRisk,
+        uint256 frontrunRisk,
+        uint256 sandwichRisk,
+        uint256 sandwichCount,
+        uint256 timestamp
+    );
+
+    event MEVConfigUpdated(
+        uint256 backrunThreshold,
+        uint256 frontrunThreshold,
+        uint256 sandwichThreshold,
+        uint256 timestamp
+    );
+
+    // ============ Fee Management ============
+
+    struct FeeConfig {
+        uint256 protocolFeeBps;      // Protocol fee in basis points
+        uint256 devFeeBps;           // Dev fee in basis points
+        uint256 stakingFeeBps;       // Staking rewards fee in basis points
+        uint256 liquidityFeeBps;     // Liquidity provision fee in basis points
+        uint256 lastUpdate;          // Last fee update timestamp
+    }
+
+    struct FeeCollector {
+        address collector;           // Fee collector address
+        uint256 pendingFees;        // Pending fees for collection
+        uint256 totalCollected;     // Total fees collected
+        uint256 lastCollection;     // Last collection timestamp
+    }
+
+    FeeConfig public feeConfig;
+    mapping(bytes32 => FeeCollector) public feeCollectors;
+    
+    /**
+     * @notice Initialize fee configuration
+     */
+    function _initializeFeeConfig() internal {
+        feeConfig = FeeConfig({
+            protocolFeeBps: PROTOCOL_FEE,    // 0.3%
+            devFeeBps: DEV_FEE,              // 0.1%
+            stakingFeeBps: 2000,             // 20%
+            liquidityFeeBps: 1000,           // 10%
+            lastUpdate: block.timestamp
+        });
+
+        // Setup fee collectors
+        _setFeeCollector("PROTOCOL", protocolFeeCollector);
+        _setFeeCollector("DEV", devFeeCollector);
+    }
+
+    /**
+     * @notice Set fee collector address
+     * @param collectorType Type of collector
+     * @param collector Address of collector
+     */
+    function _setFeeCollector(
+        string memory collectorType,
+        address collector
+    ) internal {
+        require(collector != address(0), "Invalid collector");
+        bytes32 collectorHash = keccak256(abi.encodePacked(collectorType));
+        
+        feeCollectors[collectorHash] = FeeCollector({
+            collector: collector,
+            pendingFees: 0,
+            totalCollected: 0,
+            lastCollection: block.timestamp
+        });
+    }
+
+    /**
+     * @notice Process and distribute fees
+     * @param amount Amount to process fees from
+     * @return remainingAmount Amount after fees
+     */
+    function _processFees(
+        uint256 amount
+    ) internal returns (uint256) {
+        if (amount == 0) return 0;
+
+        // Calculate fee amounts
+        uint256 protocolFee = (amount * feeConfig.protocolFeeBps) / BASIS_POINTS;
+        uint256 devFee = (amount * feeConfig.devFeeBps) / BASIS_POINTS;
+        uint256 stakingFee = (amount * feeConfig.stakingFeeBps) / BASIS_POINTS;
+        uint256 liquidityFee = (amount * feeConfig.liquidityFeeBps) / BASIS_POINTS;
+
+        // Process protocol fee
+        _processFeeAmount("PROTOCOL", protocolFee);
+
+        // Process dev fee
+        _processFeeAmount("DEV", devFee);
+
+        // Process staking rewards
+        if (stakingFee > 0 && totalStaked > 0) {
+            _distributeStakingRewards(stakingFee);
+        }
+
+        // Process liquidity fee
+        if (liquidityFee > 0) {
+            _addToLiquidityPool(liquidityFee);
+        }
+
+        // Calculate remaining amount
+        uint256 remainingAmount = amount - protocolFee - devFee - stakingFee - liquidityFee;
+
+        emit FeesProcessed(
+            amount,
+            protocolFee,
+            devFee,
+            stakingFee,
+            liquidityFee,
+            block.timestamp
+        );
+
+        return remainingAmount;
+    }
+
+    /**
+     * @notice Process individual fee amount
+     * @param collectorType Type of fee collector
+     * @param amount Fee amount to process
+     */
+    function _processFeeAmount(
+        string memory collectorType,
+        uint256 amount
+    ) internal {
+        if (amount == 0) return;
+
+        bytes32 collectorHash = keccak256(abi.encodePacked(collectorType));
+        FeeCollector storage collector = feeCollectors[collectorHash];
+
+        // Transfer fee if threshold reached
+        if (amount + collector.pendingFees >= MIN_FEE_COLLECTION) {
+            uint256 totalFees = amount + collector.pendingFees;
+            require(
+                IERC20(WPLS).transfer(collector.collector, totalFees),
+                "Fee transfer failed"
+            );
+
+            collector.totalCollected += totalFees;
+            collector.lastCollection = block.timestamp;
+            collector.pendingFees = 0;
+
+            emit FeesCollected(
+                collectorType,
+                collector.collector,
+                totalFees,
+                block.timestamp
+            );
+        } else {
+            // Accumulate pending fees
+            collector.pendingFees += amount;
+        }
+    }
+
+    /**
+     * @notice Update fee configuration
+     * @param newConfig New fee configuration
+     */
+    function updateFeeConfig(
+        FeeConfig calldata newConfig
+    ) external onlyRole(TIMELOCK_ADMIN_ROLE) {
+        // Validate total fees don't exceed maximum
+        require(
+            newConfig.protocolFeeBps +
+            newConfig.devFeeBps +
+            newConfig.stakingFeeBps +
+            newConfig.liquidityFeeBps <= MAX_FEE,
+            "Total fees too high"
+        );
+
+        emit FeeConfigUpdated(
+            newConfig.protocolFeeBps,
+            newConfig.devFeeBps,
+            newConfig.stakingFeeBps,
+            newConfig.liquidityFeeBps,
+            block.timestamp
+        );
+
+        feeConfig = newConfig;
+    }
+
+    /**
+     * @notice Update fee collector
+     * @param collectorType Type of collector to update
+     * @param newCollector New collector address
+     */
+    function updateFeeCollector(
+        string calldata collectorType,
+        address newCollector
+    ) external onlyRole(TREASURY_ROLE) {
+        bytes32 collectorHash = keccak256(abi.encodePacked(collectorType));
+        FeeCollector storage collector = feeCollectors[collectorHash];
+        
+        // Process any pending fees before update
+        if (collector.pendingFees > 0) {
+            _processFeeAmount(collectorType, 0);
+        }
+
+        address oldCollector = collector.collector;
+        _setFeeCollector(collectorType, newCollector);
+
+        emit FeeCollectorUpdated(
+            collectorType,
+            oldCollector,
+            newCollector,
+            block.timestamp
+        );
+    }
+
+    // Constants
+    uint256 private constant MIN_FEE_COLLECTION = 0.1 ether; // Minimum amount for fee collection
+
+    // Fee management events
+    event FeesProcessed(
+        uint256 totalAmount,
+        uint256 protocolFee,
+        uint256 devFee,
+        uint256 stakingFee,
+        uint256 liquidityFee,
+        uint256 timestamp
+    );
+
+    event FeesCollected(
+        string indexed collectorType,
+        address collector,
+        uint256 amount,
+        uint256 timestamp
+    );
+
+    event FeeConfigUpdated(
+        uint256 protocolFeeBps,
+        uint256 devFeeBps,
+        uint256 stakingFeeBps,
+        uint256 liquidityFeeBps,
+        uint256 timestamp
+    );
+
+    event FeeCollectorUpdated(
+        string indexed collectorType,
+        address oldCollector,
+        address newCollector,
+        uint256 timestamp
+    );
+
+    // ============ Emergency Functions ============
+
+    struct EmergencyState {
+        bool emergencyMode;           // Emergency mode status
+        uint256 lastEmergencyAction;  // Last emergency action timestamp
+        string lastActionReason;      // Reason for last action
+        address lastActionInitiator;  // Address that initiated last action
+        uint256 recoveryDelay;        // Required delay before recovery
+    }
+
+    EmergencyState public emergencyState;
+    uint256 private constant MIN_RECOVERY_DELAY = 1 hours;
+    uint256 private constant MAX_RECOVERY_ATTEMPTS = 3;
+    uint256 private recoveryAttempts;
+
+    /**
+     * @notice Activate emergency stop
+     * @param reason Reason for emergency stop
+     */
+    function emergencyStop(
+        string calldata reason
+    ) external onlyRole(EMERGENCY_ADMIN_ROLE) whenNotPaused {
+        require(!emergencyState.emergencyMode, "Already in emergency mode");
+        
+        // Activate emergency mode
+        emergencyState.emergencyMode = true;
+        emergencyState.lastEmergencyAction = block.timestamp;
+        emergencyState.lastActionReason = reason;
+        emergencyState.lastActionInitiator = msg.sender;
+        emergencyState.recoveryDelay = MIN_RECOVERY_DELAY;
+
+        // Pause contract
+        _pause();
+
+        // Cancel active operations
+        _cancelActiveOperations();
+
+        // Clear active flash loans
+        _clearActiveFlashLoans();
+
+        // Move funds to secure storage
+        _secureEmergencyFunds();
+
+        emit EmergencyActivated(
+            reason,
+            msg.sender,
+            block.timestamp
+        );
+    }
+
+    /**
+     * @notice Clear active operations in emergency
+     */
+    function _cancelActiveOperations() internal {
+        // Cancel active trades
+        for (uint256 i = 0; i < activePaths.length; i++) {
+            bytes32 pathHash = activePaths[i];
+            if (activeFlashLoans[pathHash].isActive) {
+                delete activeFlashLoans[pathHash];
+            }
+        }
+
+        delete activePaths;
+
+        emit ActiveOperationsCancelled(block.timestamp);
+    }
+
+    /**
+     * @notice Clear active flash loans
+     */
+    function _clearActiveFlashLoans() internal {
+        for (uint256 i = 0; i < activePaths.length; i++) {
+            bytes32 pathHash = activePaths[i];
+            FlashLoanData storage loan = activeFlashLoans[pathHash];
+            if (loan.isActive) {
+                emit FlashLoanFailed(
+                    loan.identifier,
+                    "Emergency stop",
+                    "",
+                    block.timestamp
+                );
+                delete activeFlashLoans[pathHash];
+            }
+        }
+    }
+
+    /**
+     * @notice Secure funds during emergency
+     */
+    function _secureEmergencyFunds() internal {
+        // Convert tokens to WPLS
+        for (uint256 i = 0; i < tokenList.length; i++) {
+            address token = tokenList[i];
+            if (token != WPLS) {
+                uint256 balance = IERC20(token).balanceOf(address(this));
+                if (balance > 0) {
+                    _swapToWPLS(token, balance);
+                }
+            }
+        }
+
+        // Update emergency fund
+        emergencyFund = IERC20(WPLS).balanceOf(address(this));
+
+        emit EmergencyFundsSecured(
+            emergencyFund,
+            block.timestamp
+        );
+    }
+
+    /**
+     * @notice Attempt recovery from emergency mode
+     * @param reason Recovery attempt reason
+     */
+    function attemptRecovery(
+        string calldata reason
+    ) external onlyRole(EMERGENCY_ADMIN_ROLE) whenPaused {
+        require(emergencyState.emergencyMode, "Not in emergency mode");
+        require(
+            block.timestamp >= emergencyState.lastEmergencyAction + emergencyState.recoveryDelay,
+            "Recovery delay active"
+        );
+        require(recoveryAttempts < MAX_RECOVERY_ATTEMPTS, "Max attempts reached");
+
+        // Increment attempt counter
+        recoveryAttempts++;
+
+        // Verify system safety
+        require(_verifySafetyConditions(), "Safety check failed");
+        require(_validateSystemHealth(), "System unhealthy");
+        require(!_detectAnomalies(), "Anomalies detected");
+
+        // Reset emergency state
+        emergencyState.emergencyMode = false;
+        emergencyState.lastEmergencyAction = block.timestamp;
+        emergencyState.lastActionReason = reason;
+        emergencyState.lastActionInitiator = msg.sender;
+
+        // Unpause contract
+        _unpause();
+
+        // Reset recovery counter on success
+        recoveryAttempts = 0;
+
+        emit RecoveryCompleted(
+            reason,
+            msg.sender,
+            block.timestamp
+        );
+    }
+
+    /**
+     * @notice Verify system safety conditions
+     */
+    function _verifySafetyConditions() internal view returns (bool) {
+        // Verify contract integrity
+        require(address(this).code.length > 0, "Contract not deployed");
+        
+        // Verify critical addresses
+        require(
+            protocolFeeCollector != address(0) &&
+            devFeeCollector != address(0),
+            "Invalid fee collectors"
+        );
+
+        // Verify token balances
+        require(
+            IERC20(WPLS).balanceOf(address(this)) >= emergencyFund,
+            "Emergency fund depleted"
+        );
+
+        // Verify system state
+        require(
+            !circuitBreaker.isTriggered,
+            "Circuit breaker active"
+        );
+
+        return true;
+    }
+
+    /**
+     * @notice Emergency withdrawal of funds
+     * @param tokens Array of token addresses
+     */
+    function emergencyWithdraw(
+        address[] calldata tokens
+    ) external onlyRole(EMERGENCY_ADMIN_ROLE) {
+        require(emergencyState.emergencyMode, "Not in emergency mode");
+
+        // Transfer native currency
+        uint256 nativeBalance = address(this).balance;
+        if (nativeBalance > 0) {
+            (bool success,) = GENESIS_WALLET.call{value: nativeBalance}("");
+            require(success, "Native transfer failed");
+        }
+
+        // Transfer tokens
+        for (uint256 i = 0; i < tokens.length; i++) {
+            IERC20 token = IERC20(tokens[i]);
+            uint256 balance = token.balanceOf(address(this));
+            if (balance > 0) {
+                token.safeTransfer(GENESIS_WALLET, balance);
+            }
+        }
+
+        emit EmergencyWithdrawal(
+            tokens,
+            msg.sender,
+            block.timestamp
+        );
+    }
+
+    // Emergency events
+    event EmergencyActivated(
+        string reason,
+        address indexed initiator,
+        uint256 timestamp
+    );
+
+    event ActiveOperationsCancelled(
+        uint256 timestamp
+    );
+
+    event EmergencyFundsSecured(
+        uint256 amount,
+        uint256 timestamp
+    );
+
+    event RecoveryCompleted(
+        string reason,
+        address indexed initiator,
+        uint256 timestamp
+    );
+
+    event EmergencyWithdrawal(
+        address[] tokens,
+        address indexed initiator,
+        uint256 timestamp
+    );
+
+    // ============ Advanced Analytics ============
+
+    struct AnalyticsData {
+        uint256 totalVolume;          // Total trading volume
+        uint256 volume24h;            // 24-hour volume
+        uint256 volumeMA7;            // 7-day moving average
+        int256 volumeTrend;           // Volume trend direction
+        uint256 successRate;          // Operation success rate
+        uint256 averageProfit;        // Average profit per trade
+        uint256 averageGas;           // Average gas per operation
+        uint256 lastUpdate;           // Last update timestamp
+    }
+
+    struct PriceData {
+        uint256[] prices;             // Historical prices
+        uint256[] timestamps;         // Price timestamps
+        uint256[] volumes;            // Trading volumes
+        uint256 lastUpdate;           // Last update timestamp
+    }
+
+    struct PerformanceMetrics {
+        uint256 profitability;        // Overall profitability
+        uint256 efficiency;           // Gas efficiency
+        uint256 reliability;          // System reliability
+        uint256 lastCalculated;       // Last calculation timestamp
+    }
+
+    // Analytics storage
+    mapping(address => AnalyticsData) public tokenAnalytics;
+    mapping(bytes32 => PriceData) public pairPriceData;
+    mapping(bytes32 => PerformanceMetrics) public pathPerformance;
+    uint256 private constant MAX_PRICE_POINTS = 1000;
+    uint256 private constant METRICS_UPDATE_INTERVAL = 1 hours;
+
+    /**
+     * @notice Update analytics after trade
+     * @param path Trading path
+     * @param amounts Trade amounts
+     * @param profit Generated profit
+     * @param gasUsed Gas consumed
+     */
+    function _updateAnalytics(
+        address[] memory path,
+        uint256[] memory amounts,
+        uint256 profit,
+        uint256 gasUsed
+    ) internal {
+        // Update token analytics
+        for (uint256 i = 0; i < path.length; i++) {
+            _updateTokenAnalytics(path[i], amounts[i], profit > 0);
+        }
+
+        // Update pair analytics
+        for (uint256 i = 0; i < path.length - 1; i++) {
+            _updatePairAnalytics(path[i], path[i + 1], amounts[i], amounts[i + 1]);
+        }
+
+        // Update path performance
+        _updatePathPerformance(path, profit, gasUsed);
+
+        emit AnalyticsUpdated(
+            keccak256(abi.encodePacked(path)),
+            profit,
+            gasUsed,
+            block.timestamp
+        );
+    }
+
+    /**
+     * @notice Update token analytics
+     * @param token Token address
+     * @param amount Trade amount
+     * @param success Whether trade was successful
+     */
+    function _updateTokenAnalytics(
+        address token,
+        uint256 amount,
+        bool success
+    ) internal {
+        AnalyticsData storage data = tokenAnalytics[token];
+        
+        // Update if enough time has passed
+        if (block.timestamp >= data.lastUpdate + METRICS_UPDATE_INTERVAL) {
+            // Update volumes
+            data.totalVolume += amount;
+            data.volume24h = _calculate24hVolume(token);
+            data.volumeMA7 = _calculateMovingAverage(token, 7 days);
+
+            // Update success rate
+            if (success) {
+                data.successRate = _calculateNewRate(
+                    data.successRate,
+                    BASIS_POINTS,
+                    totalExecutions
+                );
+            } else {
+                data.successRate = _calculateNewRate(
+                    data.successRate,
+                    0,
+                    totalExecutions
+                );
+            }
+
+            data.lastUpdate = block.timestamp;
+        }
+    }
+
+    /**
+     * @notice Update pair analytics
+     * @param token0 First token
+     * @param token1 Second token
+     * @param amount0 First amount
+     * @param amount1 Second amount
+     */
+    function _updatePairAnalytics(
+        address token0,
+        address token1,
+        uint256 amount0,
+        uint256 amount1
+    ) internal {
+        bytes32 pairHash = _getPairHash(token0, token1);
+        PriceData storage priceData = pairPriceData[pairHash];
+
+        // Calculate price and add to history
+        uint256 price = (amount1 * BASIS_POINTS) / amount0;
+        
+        if (priceData.prices.length >= MAX_PRICE_POINTS) {
+            // Rotate array if full
+            for (uint256 i = 0; i < priceData.prices.length - 1; i++) {
+                priceData.prices[i] = priceData.prices[i + 1];
+                priceData.timestamps[i] = priceData.timestamps[i + 1];
+                priceData.volumes[i] = priceData.volumes[i + 1];
+            }
+            priceData.prices[priceData.prices.length - 1] = price;
+            priceData.timestamps[priceData.timestamps.length - 1] = block.timestamp;
+            priceData.volumes[priceData.volumes.length - 1] = amount0;
+        } else {
+            priceData.prices.push(price);
+            priceData.timestamps.push(block.timestamp);
+            priceData.volumes.push(amount0);
+        }
+
+        priceData.lastUpdate = block.timestamp;
+    }
+
+    /**
+     * @notice Update path performance metrics
+     * @param path Trading path
+     * @param profit Generated profit
+     * @param gasUsed Gas consumed
+     */
+    function _updatePathPerformance(
+        address[] memory path,
+        uint256 profit,
+        uint256 gasUsed
+    ) internal {
+        bytes32 pathHash = keccak256(abi.encodePacked(path));
+        PerformanceMetrics storage metrics = pathPerformance[pathHash];
+
+        // Calculate profitability
+        if (profit > 0) {
+            metrics.profitability = _calculateNewRate(
+                metrics.profitability,
+                (profit * BASIS_POINTS) / gasUsed,
+                totalExecutions
+            );
+        }
+
+        // Calculate efficiency
+        uint256 efficiency = _calculateGasEfficiency(gasUsed);
+        metrics.efficiency = _calculateNewRate(
+            metrics.efficiency,
+            efficiency,
+            totalExecutions
+        );
+
+        // Calculate reliability
+        metrics.reliability = _calculateNewRate(
+            metrics.reliability,
+            profit > 0 ? BASIS_POINTS : 0,
+            totalExecutions
+        );
+
+        metrics.lastCalculated = block.timestamp;
+    }
+
+    /**
+     * @notice Calculate 24h volume for token
+     * @param token Token address
+     */
+    function _calculate24hVolume(
+        address token
+    ) internal view returns (uint256) {
+        AnalyticsData storage data = tokenAnalytics[token];
+        if (block.timestamp < data.lastUpdate + 24 hours) {
+            return data.volume24h;
+        }
+        return 0; // Reset if more than 24h passed
+    }
+
+    /**
+     * @notice Calculate moving average for token
+     * @param token Token address
+     * @param period Period to average over
+     */
+    function _calculateMovingAverage(
+        address token,
+        uint256 period
+    ) internal view returns (uint256) {
+        bytes32 pairHash = _getPairHash(token, WPLS);
+        PriceData storage priceData = pairPriceData[pairHash];
+        
+        uint256 sum = 0;
+        uint256 count = 0;
+        
+        for (uint256 i = 0; i < priceData.prices.length; i++) {
+            if (block.timestamp - priceData.timestamps[i] <= period) {
+                sum += priceData.prices[i];
+                count++;
+            }
+        }
+
+        return count > 0 ? sum / count : 0;
+    }
+
+    /**
+     * @notice Calculate gas efficiency score
+     * @param gasUsed Gas consumed
+     */
+    function _calculateGasEfficiency(
+        uint256 gasUsed
+    ) internal pure returns (uint256) {
+        uint256 baselineGas = 500000; // Baseline gas usage
+        if (gasUsed <= baselineGas) {
+            return BASIS_POINTS;
+        }
+        return (baselineGas * BASIS_POINTS) / gasUsed;
+    }
+
+    /**
+     * @notice Calculate new rate with historical weighting
+     * @param currentRate Current rate
+     * @param newValue New value
+     * @param count Total count
+     */
+    function _calculateNewRate(
+        uint256 currentRate,
+        uint256 newValue,
+        uint256 count
+    ) internal pure returns (uint256) {
+        if (count == 0) return newValue;
+        return ((currentRate * count) + newValue) / (count + 1);
+    }
+
+    /**
+     * @notice Get hash for token pair
+     * @param token0 First token
+     * @param token1 Second token
+     */
+    function _getPairHash(
+        address token0,
+        address token1
+    ) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(
+            token0 < token1 ? token0 : token1,
+            token0 < token1 ? token1 : token0
+        ));
+    }
+
+    // Analytics events
+    event AnalyticsUpdated(
+        bytes32 indexed identifier,
+        uint256 profit,
+        uint256 gasUsed,
+        uint256 timestamp
+    );
+
+    event MetricsCalculated(
+        bytes32 indexed pathHash,
+        uint256 profitability,
+        uint256 efficiency,
+        uint256 reliability,
+        uint256 timestamp
+    );
+
+    // ============ Helper Functions ============
+
+    /**
+     * @notice Safe token approval with amount reset
+     * @param token Token to approve
+     * @param spender Address to approve
+     * @param amount Amount to approve
+     */
+    function _safeApprove(
+        address token,
+        address spender,
+        uint256 amount
+    ) internal {
+        IERC20(token).approve(spender, 0);
+        IERC20(token).approve(spender, amount);
+    }
+
+    /**
+     * @notice Swap token to WPLS
+     * @param token Token to swap
+     * @param amount Amount to swap
+     * @return Amount of WPLS received
+     */
+    function _swapToWPLS(
+        address token,
+        uint256 amount
+    ) internal returns (uint256) {
+        if (token == WPLS || amount == 0) return 0;
+
+        // Setup path
+        address[] memory path = new address[](2);
+        path[0] = token;
+        path[1] = WPLS;
+
+        // Approve router
+        _safeApprove(token, PULSEX_ROUTER, amount);
+
+        try IPulseXRouter(PULSEX_ROUTER).swapExactTokensForTokens(
+            amount,
+            0, // Accept any amount of WPLS
+            path,
+            address(this),
+            block.timestamp + 1 // Short deadline
+        ) returns (uint256[] memory amounts) {
+            return amounts[amounts.length - 1];
+        } catch {
+            return 0;
+        }
+    }
+
+    /**
+     * @notice Get reserves for token pair
+     * @param tokenA First token
+     * @param tokenB Second token
+     * @return reserve0 First token reserve
+     * @return reserve1 Second token reserve
+     */
+    function _getPairReserves(
+        address tokenA,
+        address tokenB
+    ) internal view returns (uint256 reserve0, uint256 reserve1) {
+        address pair = IPulseXFactory(PULSEX_FACTORY).getPair(tokenA, tokenB);
+        if (pair == address(0)) return (0, 0);
+
+        (uint112 _reserve0, uint112 _reserve1,) = IPulseXPair(pair).getReserves();
+        return (uint256(_reserve0), uint256(_reserve1));
+    }
+
+    /**
+     * @notice Calculate square root for normalization
+     * @param x Input value
+     * @return y Square root result
+     */
+    function _sqrt(
+        uint256 x
+    ) internal pure returns (uint256 y) {
+        if (x == 0) return 0;
+        
+        uint256 z = (x + 1) / 2;
+        y = x;
+        
+        while (z < y) {
+            y = z;
+            z = (x / z + z) / 2;
+        }
+    }
+
+    /**
+     * @notice Convert wei value to PLS with 18 decimals
+     * @param amount Wei amount
+     * @return PLS amount
+     */
+    function _toPLS(
+        uint256 amount
+    ) internal pure returns (uint256) {
+        return amount / 1e18;
+    }
+
+    /**
+     * @notice Convert PLS to wei value
+     * @param amount PLS amount
+     * @return Wei amount
+     */
+    function _toWei(
+        uint256 amount
+    ) internal pure returns (uint256) {
+        return amount * 1e18;
+    }
+
+    /**
+     * @notice Calculate percentage of total
+     * @param amount Amount to calculate
+     * @param total Total amount
+     * @return Percentage in basis points
+     */
+    function _calculatePercentage(
+        uint256 amount,
+        uint256 total
+    ) internal pure returns (uint256) {
+        if (total == 0) return 0;
+        return (amount * BASIS_POINTS) / total;
+    }
+
+    /**
+     * @notice Apply percentage to amount
+     * @param amount Base amount
+     * @param percentage Percentage in basis points
+     * @return Result amount
+     */
+    function _applyPercentage(
+        uint256 amount,
+        uint256 percentage
+    ) internal pure returns (uint256) {
+        return (amount * percentage) / BASIS_POINTS;
+    }
+
+    /**
+     * @notice Verify array length match
+     * @param path Token path
+     * @param amounts Amount array
+     * @return Whether lengths match
+     */
+    function _verifyArrayLengths(
+        address[] memory path,
+        uint256[] memory amounts
+    ) internal pure returns (bool) {
+        return path.length >= 2 && path.length == amounts.length;
+    }
+
+    /**
+     * @notice Get minimum output amount with slippage
+     * @param amount Input amount
+     * @param slippage Slippage in basis points
+     * @return Minimum output amount
+     */
+    function _getMinimumOutput(
+        uint256 amount,
+        uint256 slippage
+    ) internal pure returns (uint256) {
+        return amount - ((amount * slippage) / BASIS_POINTS);
+    }
+
+    /**
+     * @notice Split amount into parts
+     * @param amount Total amount
+     * @param parts Number of parts
+     * @return amounts Array of split amounts
+     */
+    function _splitAmount(
+        uint256 amount,
+        uint256 parts
+    ) internal pure returns (uint256[] memory amounts) {
+        require(parts > 0, "Invalid parts");
+        amounts = new uint256[](parts);
+        uint256 baseAmount = amount / parts;
+        uint256 remainder = amount % parts;
+
+        for (uint256 i = 0; i < parts; i++) {
+            amounts[i] = baseAmount;
+            if (i < remainder) {
+                amounts[i]++;
+            }
+        }
+    }
+
+    /**
+     * @notice Validate deadline
+     * @param deadline Transaction deadline
+     * @return Whether deadline is valid
+     */
+    function _isValidDeadline(
+        uint256 deadline
+    ) internal view returns (bool) {
+        return deadline >= block.timestamp;
+    }
+
+    /**
+     * @notice Get gas price with buffer
+     * @return Gas price with safety buffer
+     */
+    function _getSafeGasPrice() internal view returns (uint256) {
+        return Math.min(
+            block.basefee + GAS_RESERVE_BPS,
+            MAX_GAS_PRICE
+        );
+    }
+
+    /**
+     * @notice Parse revert reason from response
+     * @param response Error response
+     * @return Parsed reason string
+     */
+    function _parseRevertReason(
+        bytes memory response
+    ) internal pure returns (string memory) {
+        // Slice out revert string from response
+        if (response.length < 68) return "Unknown error";
+        bytes memory revertData = new bytes(response.length - 68);
+        for (uint256 i = 0; i < revertData.length; i++) {
+            revertData[i] = response[i + 68];
+        }
+        return string(revertData);
+    }
