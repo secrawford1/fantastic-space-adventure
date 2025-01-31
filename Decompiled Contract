@@ -1,0 +1,2801 @@
+// Decompiled by library.dedaub.com
+// 2025.01.27 16:56 UTC
+// Compiled using the solidity compiler version 0.8.19
+
+
+// Data structures and variables inferred from the use of storage instructions
+address _owner; // STORAGE[0x0] bytes 0 to 19
+address ___function_selector__; // STORAGE[0x1] bytes 0 to 19
+address stor_2_0_19; // STORAGE[0x2] bytes 0 to 19
+
+
+// Events
+OwnershipTransferred(address, address);
+
+function 0x391615ab(address varg0, uint256 varg1, bool varg2, uint256 varg3) public nonPayable { 
+    require(msg.data.length - 4 >= 128);
+    v0 = 0xce0(varg3, varg2, varg1, varg0);
+    return v0;
+}
+
+function 0x3c9a31e9(struct(6) varg0) public payable { 
+    v0 = v1 = 0x1876e;
+    require(msg.data.length - 4 >= 32);
+    require(varg0 <= uint64.max);
+    v2 = v3 = 4 + varg0;
+    require(msg.data.length - v3 >= 192);
+    require(msg.data[v3 + 32] < msg.data.length - v3 - 31);
+    require(v4.length <= uint64.max);
+    require(v4.data <= msg.data.length - (v4.length << 5));
+    require(v4.length <= uint64.max, Panic(65)); // failed memory allocation (too much memory)
+    v5 = new uint256[](v4.length);
+    if (v4.length) {
+        CALLDATACOPY(v5.data, msg.data.length, v4.length << 5);
+    }
+    require(0 < v5.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+    v6 = v5.data;
+    v5[0] = varg0.word5;
+    v7 = v8 = 0;
+    while (1) {
+        require(msg.data[v3 + 64] < msg.data.length - v3 - 31);
+        require(v9.length <= uint64.max);
+        require(v9.data <= msg.data.length - (v9.length << 5));
+        if (v7 >= v9.length) {
+            v10 = _SafeSub(v5.length, 1);
+            require(v10 < v5.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+            require(v5[v10] > varg0.word5, Error('no profit'));
+        } else {
+            require(msg.data[v3 + 128] < msg.data.length - v3 - 31);
+            require(v11.length <= uint64.max);
+            require(v11.data <= msg.data.length - (v11.length << 5));
+            require(v7 < v11.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+            if (0 - v11[v7]) {
+                require(msg.data[v3 + 128] < msg.data.length - v3 - 31);
+                require(v12.length <= uint64.max);
+                require(v12.data <= msg.data.length - (v12.length << 5));
+                require(v7 < v12.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                if (1 - v12[v7]) {
+                    require(msg.data[v3 + 128] < msg.data.length - v3 - 31);
+                    require(v13.length <= uint64.max);
+                    require(v13.data <= msg.data.length - (v13.length << 5));
+                    require(v7 < v13.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                    if (!(7 - v13[v7])) {
+                        require(v7 < v5.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                        require(msg.data[32 + v3] < msg.data.length - v3 - 31);
+                        require(v14.length <= uint64.max);
+                        require(v14.data <= msg.data.length - (v14.length << 5));
+                        require(v7 < v14.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                        require((v7 << 5) + v14.data + 32 - ((v7 << 5) + v14.data) >= 32);
+                        require(v14[v7] == address(v14[v7]));
+                        require(msg.data[v3 + 32] < msg.data.length - v3 - 31);
+                        require(v15.length <= uint64.max);
+                        require(v15.data <= msg.data.length - (v15.length << 5));
+                        v16 = _SafeAdd(1, v7);
+                        require(v16 < v15.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                        require((v16 << 5) + v15.data + 32 - ((v16 << 5) + v15.data) >= 32);
+                        require(v15[v16] == address(v15[v16]));
+                        require(msg.data[v3 + 64] < msg.data.length - v3 - 31);
+                        require(v17.length <= uint64.max);
+                        require(v17.data <= msg.data.length - (v17.length << 5));
+                        require(v7 < v17.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                        require((v7 << 5) + v17.data + 32 - ((v7 << 5) + v17.data) >= 32);
+                        require(v17[v7] == address(v17[v7]));
+                        require(0 - v5[v7], Error('INSUFFICIENT_INPUT_AMOUNT'));
+                        v18 = address(v17[v7]).getPoolId().gas(msg.gas);
+                        if (bool(v18)) {
+                            require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                            MEM[MEM[64]] = 0xf94d466800000000000000000000000000000000000000000000000000000000;
+                            MEM[4 + MEM[64]] = MEM[MEM[64]];
+                            v19 = stor_2_0_19.staticcall(MEM[MEM[64]:MEM[64] + 36 + MEM[64] - MEM[64]], MEM[MEM[64]:MEM[64]]).gas(msg.gas);
+                            if (bool(v19)) {
+                                RETURNDATACOPY(MEM[64], 0, RETURNDATASIZE());
+                                MEM[64] = MEM[64] + (0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & RETURNDATASIZE() + 31);
+                                require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 96);
+                                require(MEM[MEM[64]] <= uint64.max);
+                                require(MEM[64] + MEM[MEM[64]] + 31 < MEM[64] + RETURNDATASIZE());
+                                require(MEM[MEM[64] + MEM[MEM[64]]] <= uint64.max, Panic(65)); // failed memory allocation (too much memory)
+                                v20 = new uint256[](MEM[MEM[64] + MEM[MEM[64]]]);
+                                require(!((v20 + (0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 32 + (MEM[MEM[64] + MEM[MEM[64]]] << 5) + 31) < v20) | (v20 + (0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 32 + (MEM[MEM[64] + MEM[MEM[64]]] << 5) + 31) > uint64.max)), Panic(65)); // failed memory allocation (too much memory)
+                                v21 = v20.data;
+                                require(32 + (MEM[64] + MEM[MEM[64]] + (MEM[MEM[64] + MEM[MEM[64]]] << 5)) <= MEM[64] + RETURNDATASIZE());
+                                v22 = 32 + (MEM[64] + MEM[MEM[64]]);
+                                while (v22 >= 32 + (MEM[64] + MEM[MEM[64]] + (MEM[MEM[64] + MEM[MEM[64]]] << 5))) {
+                                    require(MEM[v22] == address(MEM[v22]));
+                                    MEM[v21] = MEM[v22];
+                                    v22 += 32;
+                                    v21 += 32;
+                                }
+                                require(MEM[MEM[64] + 32] <= uint64.max);
+                                v23 = 0x4cc1(MEM[64] + MEM[MEM[64] + 32], MEM[64] + RETURNDATASIZE());
+                                v24 = address(v17[v7]).getNormalizedWeights().gas(msg.gas);
+                                if (bool(v24)) {
+                                    RETURNDATACOPY(MEM[64], 0, RETURNDATASIZE());
+                                    require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                    require(MEM[MEM[64]] <= uint64.max);
+                                    v25 = 0x4cc1(MEM[64] + MEM[MEM[64]], MEM[64] + RETURNDATASIZE());
+                                    v26 = 0;
+                                    v27 = 0;
+                                    v28 = v29 = 0;
+                                    v30 = v31 = 0;
+                                    while (v30 >= v20.length) {
+                                        require(v30 < v20.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                                        if (address(v20[v30]) - address(v14[v7])) {
+                                            if (!(address(v20[v30]) - address(v15[v16]))) {
+                                                require(v30 < v23.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                                                v27 = v32 = v23[v30];
+                                                require(v30 < v25.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                                                v27 = v33 = v25[v30];
+                                                v28 = v34 = 1;
+                                                if (v28) {
+                                                    break;
+                                                }
+                                            }
+                                        } else {
+                                            require(v30 < v23.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                                            v26 = v35 = v23[v30];
+                                            require(v30 < v25.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                                            v26 = v36 = v25[v30];
+                                            v28 = v37 = 1;
+                                            if (v28) {
+                                                break;
+                                            }
+                                        }
+                                        v30 += 1;
+                                    }
+                                    v38 = v39 = !v28;
+                                    if (v28) {
+                                        v38 = !v28;
+                                    }
+                                    require(!v38, Error('TOKEN_NOT_FOUND'));
+                                    v40 = address(v17[v7]).getSwapFeePercentage().gas(msg.gas);
+                                    if (bool(v40)) {
+                                        require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                        v41 = _SafeMul(v5[v7], MEM[MEM[64]]);
+                                        v42 = _SafeDiv(v41, 10 ** 18);
+                                        v43 = _SafeSub(v5[v7], v42);
+                                        v44 = 0x358b(v43, v27, v27, v26, v26);
+                                        v45 = _SafeAdd(1, v7);
+                                        require(v45 < v5.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                                        v5[v45] = v44;
+                                        v46 = _SafeAdd(1, v7);
+                                        require(v46 < v5.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                                        require(v5[v46] > 0, Error('Phux output amount is zero'));
+                                    } else {
+                                        RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                        revert(0, RETURNDATASIZE());
+                                    }
+                                } else {
+                                    RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                    revert(0, RETURNDATASIZE());
+                                }
+                            } else {
+                                RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                revert(0, RETURNDATASIZE());
+                            }
+                        } else {
+                            RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                            revert(0, RETURNDATASIZE());
+                        }
+                    }
+                } else {
+                    require(msg.data[v3 + 64] < msg.data.length - v3 - 31);
+                    require(v47.length <= uint64.max);
+                    require(v47.data <= msg.data.length - (v47.length << 5));
+                    require(v7 < v47.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                    require((v7 << 5) + v47.data + 32 - ((v7 << 5) + v47.data) >= 32);
+                    require(v47[v7] == address(v47[v7]));
+                    v48 = address(v47[v7]).getReserves().gas(msg.gas);
+                    if (bool(v48)) {
+                        require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 96);
+                        v49 = v50 = MEM[MEM[64]];
+                        require(v50 == uint112(v50));
+                        v49 = MEM[MEM[64] + 32];
+                        require(v49 == uint112(v49));
+                        require(MEM[MEM[64] + 64] == uint32(MEM[MEM[64] + 64]));
+                        v51 = address(v47[v7]).token0().gas(msg.gas);
+                        if (bool(v51)) {
+                            require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                            require(MEM[MEM[64]] == address(MEM[MEM[64]]));
+                            require(msg.data[v3 + 32] < msg.data.length - v3 - 31);
+                            require(v52.length <= uint64.max);
+                            require(v52.data <= msg.data.length - (v52.length << 5));
+                            require(v7 < v52.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                            require((v7 << 5) + v52.data + 32 - ((v7 << 5) + v52.data) >= 32);
+                            require(v52[v7] == address(v52[v7]));
+                            require(v7 < v5.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                            if (address(v52[v7]) != address(MEM[MEM[64]])) {
+                            }
+                            if (address(v52[v7]) != address(MEM[MEM[64]])) {
+                            }
+                            require(msg.data[v3 + 96] < msg.data.length - v3 - 31);
+                            require(v53.length <= uint64.max);
+                            require(v53.data <= msg.data.length - (v53.length << 5));
+                            require(v7 < v53.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                            require(v5[v7] > 0, Error('INSUFFICIENT_INPUT_AMOUNT'));
+                            v54 = v55 = uint112(v49) > 0;
+                            if (v55) {
+                                v54 = uint112(v49) > 0;
+                            }
+                            require(v54, Error('INSUFFICIENT_LIQUIDITY'));
+                            require(v5[v7] * (10000 - v53[v7]) + uint112(v49) * 10000, Panic(18)); // division by zero
+                            v56 = _SafeAdd(1, v7);
+                            require(v56 < v5.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                            v5[v56] = v5[v7] * (10000 - v53[v7]) * uint112(v49) / (v5[v7] * (10000 - v53[v7]) + uint112(v49) * 10000) - 1;
+                        } else {
+                            RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                            revert(0, RETURNDATASIZE());
+                        }
+                    } else {
+                        RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                        revert(0, RETURNDATASIZE());
+                    }
+                }
+            } else {
+                require(msg.data[v3 + 64] < msg.data.length - v3 - 31);
+                require(v57.length <= uint64.max);
+                require(v57.data <= msg.data.length - (v57.length << 5));
+                require(v7 < v57.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                require((v7 << 5) + v57.data + 32 - ((v7 << 5) + v57.data) >= 32);
+                require(v57[v7] == address(v57[v7]));
+                require(msg.data[v3 + 32] < msg.data.length - v3 - 31);
+                require(v58.length <= uint64.max);
+                require(v58.data <= msg.data.length - (v58.length << 5));
+                require(v7 < v58.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                require((v7 << 5) + v58.data + 32 - ((v7 << 5) + v58.data) >= 32);
+                require(v58[v7] == address(v58[v7]));
+                require(msg.data[v3 + 96] < msg.data.length - v3 - 31);
+                require(v59.length <= uint64.max);
+                require(v59.data <= msg.data.length - (v59.length << 5));
+                require(v7 < v59.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                require(msg.data[64 + v3] < msg.data.length - v3 - 31);
+                require(v60.length <= uint64.max);
+                require(v60.data <= msg.data.length - (v60.length << 5));
+                require(v7 < v60.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                require((v7 << 5) + v60.data + 32 - ((v7 << 5) + v60.data) >= 32);
+                require(v60[v7] == address(v60[v7]));
+                v61 = address(v60[v7]).token0().gas(msg.gas);
+                if (bool(v61)) {
+                    require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                    require(MEM[MEM[64]] == address(MEM[MEM[64]]));
+                    require(v7 < v5.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                    v62 = 0x3399(v5[v7], MEM[MEM[64]], v59[v7], v58[v7], v57[v7]);
+                    v63 = _SafeAdd(1, v7);
+                    require(v63 < v5.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                    v5[v63] = v62;
+                    v64 = _SafeAdd(1, v7);
+                    require(v64 < v5.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                    require(v5[v64] > 0, Error('V3 output amount is zero'));
+                } else {
+                    RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                    revert(0, RETURNDATASIZE());
+                }
+            }
+            v7 = 0x4de9(v7);
+        }
+        require(msg.data[v3 + 32] < msg.data.length - v3 - 31);
+        require(v65.length <= uint64.max);
+        require(v65.data <= msg.data.length - (v65.length << 5));
+        require(0 < v65.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+        require(v65.data + 32 - v65.data >= 32);
+        require(v65[0] == address(v65[0]));
+        if (!(address(v65[0]) - 0xa1077a294dde1b09bb078844df40758a5d0f9a27)) {
+            v66, /* uint256 */ v67 = 0xa1077a294dde1b09bb078844df40758a5d0f9a27.balanceOf(_owner).gas(msg.gas);
+            require(bool(v66), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+            require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+            if (varg0.word5 < v67) {
+                v68, /* bool */ v69 = address(0xa1077a294dde1b09bb078844df40758a5d0f9a27).transferFrom(_owner, this, varg0.word5).gas(msg.gas);
+                require(bool(v68), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+                require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                require(v69 == bool(v69));
+                require(msg.data[v3 + 64] < msg.data.length - v3 - 31);
+                require(v70.length <= uint64.max);
+                require(v70.data <= msg.data.length - (v70.length << 5));
+                v71 = v72 = 0;
+                while (v71 >= v70.length) {
+                    require(msg.data[v3 + 128] < msg.data.length - v3 - 31);
+                    require(v73.length <= uint64.max);
+                    require(v73.data <= msg.data.length - (v73.length << 5));
+                    require(v71 < v73.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                    if (0 - v73[v71]) {
+                        if (1 - v73[v71]) {
+                            if (7 - v73[v71]) {
+                                require(msg.data[v3 + 32] < msg.data.length - v3 - 31);
+                                require(v74.length <= uint64.max);
+                                require(v74.data <= msg.data.length - (v74.length << 5));
+                                require(v71 < v74.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                                require((v71 << 5) + v74.data + 32 - ((v71 << 5) + v74.data) >= 32);
+                                require(v74[v71] == address(v74[v71]));
+                                require(msg.data[v3 + 32] < msg.data.length - v3 - 31);
+                                require(v75.length <= uint64.max);
+                                require(v75.data <= msg.data.length - (v75.length << 5));
+                                v76 = _SafeAdd(1, v71);
+                                require(v76 < v75.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                                require((v76 << 5) + v75.data + 32 - ((v76 << 5) + v75.data) >= 32);
+                                require(v75[v76] == address(v75[v76]));
+                                require(msg.data[v3 + 64] < msg.data.length - v3 - 31);
+                                require(v77.length <= uint64.max);
+                                require(v77.data <= msg.data.length - (v77.length << 5));
+                                require(v71 < v77.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                                require((v71 << 5) + v77.data + 32 - ((v71 << 5) + v77.data) >= 32);
+                                require((?)[v71] == address((?)[v71]));
+                                v78 = address(v74[v71]).balanceOf(this).gas(msg.gas);
+                                if (bool(v78)) {
+                                    require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                    v79 = new struct(6);
+                                    v80 = address((?)[v71]).getPoolId().gas(msg.gas);
+                                    if (bool(v80)) {
+                                        require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                        v79.word0 = MEM[MEM[64]];
+                                        v79.word1 = 0;
+                                        v79.word2 = address(v74[v71]);
+                                        v79.word3 = address(v75[v76]);
+                                        v79.word4 = MEM[MEM[64]];
+                                        v81 = new struct(1);
+                                        v81.word0 = 0;
+                                        v79.word5 = v81;
+                                        MEM[64] += 128;
+                                        MEM[MEM[64]] = 0x95ea7b300000000000000000000000000000000000000000000000000000000;
+                                        MEM[4 + MEM[64]] = address(0x7f51ac3df6a034273fb09bb29e383fcf655e473c);
+                                        MEM[4 + MEM[64] + 32] = MEM[MEM[64]];
+                                        v82 = address(v74[v71]).call(MEM[MEM[64]:MEM[64] + 68 + MEM[64] - MEM[64]], MEM[MEM[64]:MEM[64] + 32]).gas(msg.gas);
+                                        if (bool(v82)) {
+                                            MEM[64] = MEM[64] + (RETURNDATASIZE() + 31 & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0);
+                                            require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                            require(MEM[MEM[64]] == bool(MEM[MEM[64]]));
+                                            v83 = _SafeAdd(1, block.timestamp);
+                                            MEM[MEM[64]] = 0x52bbbe2900000000000000000000000000000000000000000000000000000000;
+                                            MEM[4 + MEM[64]] = 224;
+                                            MEM[4 + MEM[64] + 224] = v79.word0;
+                                            require(v79.word1 < 2, Panic(33)); // failed convertion to enum type
+                                            MEM[4 + MEM[64] + 224 + 32] = v79.word1;
+                                            MEM[4 + MEM[64] + 224 + 64] = address(v79.word2);
+                                            MEM[4 + MEM[64] + 224 + 96] = address(v79.word3);
+                                            MEM[4 + MEM[64] + 224 + 128] = v79.word4;
+                                            MEM[4 + MEM[64] + 224 + 160] = 192;
+                                            MEM[4 + MEM[64] + 224 + 192] = MEM[v79.word5];
+                                            v84 = v85 = 0;
+                                            while (v84 >= MEM[v79.word5]) {
+                                                MEM[v84 + (4 + MEM[64] + 224 + 192 + 32)] = MEM[v84 + (v79.word5 + 32)];
+                                                v84 += 32;
+                                            }
+                                            MEM[MEM[v79.word5] + (4 + MEM[64] + 224 + 192 + 32)] = 0;
+                                            MEM[4 + MEM[64] + 32] = address(this);
+                                            MEM[4 + MEM[64] + 32 + 32] = False;
+                                            MEM[4 + MEM[64] + 32 + 64] = address(this);
+                                            MEM[4 + MEM[64] + 32 + 96] = False;
+                                            MEM[4 + MEM[64] + 160] = 0;
+                                            MEM[196 + MEM[64]] = v83;
+                                            v86 = stor_2_0_19.call(MEM[MEM[64]:MEM[64] + 32 + 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 31 + MEM[vdc90x2eb1V0x1f6.word5] + 4 + MEM[64] + 224 + 192 - MEM[64]], MEM[MEM[64]:MEM[64] + 32]).gas(msg.gas);
+                                            if (bool(v86)) {
+                                                MEM[64] = MEM[64] + (RETURNDATASIZE() + 31 & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0);
+                                                require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                            } else {
+                                                RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                                revert(0, RETURNDATASIZE());
+                                            }
+                                        } else {
+                                            RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                            revert(0, RETURNDATASIZE());
+                                        }
+                                    } else {
+                                        RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                        revert(0, RETURNDATASIZE());
+                                    }
+                                } else {
+                                    RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                    revert(0, RETURNDATASIZE());
+                                }
+                            } else {
+                                require(msg.data[v3 + 32] < msg.data.length - v3 - 31);
+                                require(v87.length <= uint64.max);
+                                require(v87.data <= msg.data.length - (v87.length << 5));
+                                require(v71 < v87.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                                require((v71 << 5) + v87.data + 32 - ((v71 << 5) + v87.data) >= 32);
+                                require(v87[v71] == address(v87[v71]));
+                                require(msg.data[v3 + 32] < msg.data.length - v3 - 31);
+                                require(v88.length <= uint64.max);
+                                require(v88.data <= msg.data.length - (v88.length << 5));
+                                v89 = _SafeAdd(1, v71);
+                                require(v89 < v88.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                                require((v89 << 5) + v88.data + 32 - ((v89 << 5) + v88.data) >= 32);
+                                require(v88[v89] == address(v88[v89]));
+                                require(msg.data[v3 + 64] < msg.data.length - v3 - 31);
+                                require(v90.length <= uint64.max);
+                                require(v90.data <= msg.data.length - (v90.length << 5));
+                                require(v71 < v90.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                                require((v71 << 5) + v90.data + 32 - ((v71 << 5) + v90.data) >= 32);
+                                require((?)[v71] == address((?)[v71]));
+                                v91 = address(v87[v71]).balanceOf(this).gas(msg.gas);
+                                if (bool(v91)) {
+                                    require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                    v92 = new struct(6);
+                                    v93 = address((?)[v71]).getPoolId().gas(msg.gas);
+                                    if (bool(v93)) {
+                                        require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                        v92.word0 = MEM[MEM[64]];
+                                        v92.word1 = 0;
+                                        v92.word2 = address(v87[v71]);
+                                        v92.word3 = address(v88[v89]);
+                                        v92.word4 = MEM[MEM[64]];
+                                        v94 = new struct(1);
+                                        v94.word0 = 0;
+                                        v92.word5 = v94;
+                                        MEM[64] += 128;
+                                        MEM[MEM[64]] = 0x95ea7b300000000000000000000000000000000000000000000000000000000;
+                                        MEM[4 + MEM[64]] = address(0x7f51ac3df6a034273fb09bb29e383fcf655e473c);
+                                        MEM[4 + MEM[64] + 32] = MEM[MEM[64]];
+                                        v95 = address(v87[v71]).call(MEM[MEM[64]:MEM[64] + 68 + MEM[64] - MEM[64]], MEM[MEM[64]:MEM[64] + 32]).gas(msg.gas);
+                                        if (bool(v95)) {
+                                            MEM[64] = MEM[64] + (RETURNDATASIZE() + 31 & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0);
+                                            require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                            require(MEM[MEM[64]] == bool(MEM[MEM[64]]));
+                                            v96 = _SafeAdd(1, block.timestamp);
+                                            MEM[MEM[64]] = 0x52bbbe2900000000000000000000000000000000000000000000000000000000;
+                                            MEM[4 + MEM[64]] = 224;
+                                            MEM[4 + MEM[64] + 224] = v92.word0;
+                                            require(v92.word1 < 2, Panic(33)); // failed convertion to enum type
+                                            MEM[4 + MEM[64] + 224 + 32] = v92.word1;
+                                            MEM[4 + MEM[64] + 224 + 64] = address(v92.word2);
+                                            MEM[4 + MEM[64] + 224 + 96] = address(v92.word3);
+                                            MEM[4 + MEM[64] + 224 + 128] = v92.word4;
+                                            MEM[4 + MEM[64] + 224 + 160] = 192;
+                                            MEM[4 + MEM[64] + 224 + 192] = MEM[v92.word5];
+                                            v97 = v98 = 0;
+                                            while (v97 >= MEM[v92.word5]) {
+                                                MEM[v97 + (4 + MEM[64] + 224 + 192 + 32)] = MEM[v97 + (v92.word5 + 32)];
+                                                v97 += 32;
+                                            }
+                                            MEM[MEM[v92.word5] + (4 + MEM[64] + 224 + 192 + 32)] = 0;
+                                            MEM[4 + MEM[64] + 32] = address(this);
+                                            MEM[4 + MEM[64] + 32 + 32] = False;
+                                            MEM[4 + MEM[64] + 32 + 64] = address(this);
+                                            MEM[4 + MEM[64] + 32 + 96] = False;
+                                            MEM[4 + MEM[64] + 160] = 0;
+                                            MEM[196 + MEM[64]] = v96;
+                                            v99 = stor_2_0_19.call(MEM[MEM[64]:MEM[64] + 32 + 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 31 + MEM[vdc90x2c40V0x1f6.word5] + 4 + MEM[64] + 224 + 192 - MEM[64]], MEM[MEM[64]:MEM[64] + 32]).gas(msg.gas);
+                                            if (bool(v99)) {
+                                                MEM[64] = MEM[64] + (RETURNDATASIZE() + 31 & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0);
+                                                require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                            } else {
+                                                RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                                revert(0, RETURNDATASIZE());
+                                            }
+                                        } else {
+                                            RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                            revert(0, RETURNDATASIZE());
+                                        }
+                                    } else {
+                                        RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                        revert(0, RETURNDATASIZE());
+                                    }
+                                } else {
+                                    RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                    revert(0, RETURNDATASIZE());
+                                }
+                            }
+                        } else {
+                            require(msg.data[v3 + 32] < msg.data.length - v3 - 31);
+                            require(v100.length <= uint64.max);
+                            require(v100.data <= msg.data.length - (v100.length << 5));
+                            require(v71 < v100.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                            require((v71 << 5) + v100.data + 32 - ((v71 << 5) + v100.data) >= 32);
+                            require(v100[v71] == address(v100[v71]));
+                            require(msg.data[v3 + 32] < msg.data.length - v3 - 31);
+                            require(v101.length <= uint64.max);
+                            require(v101.data <= msg.data.length - (v101.length << 5));
+                            v102 = _SafeAdd(1, v71);
+                            require(v102 < v101.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                            require((v102 << 5) + v101.data + 32 - ((v102 << 5) + v101.data) >= 32);
+                            require(v101[v102] == address(v101[v102]));
+                            require(msg.data[v3 + 64] < msg.data.length - v3 - 31);
+                            require(v103.length <= uint64.max);
+                            require(v103.data <= msg.data.length - (v103.length << 5));
+                            require(v71 < v103.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                            require((v71 << 5) + v103.data + 32 - ((v71 << 5) + v103.data) >= 32);
+                            require((?)[v71] == address((?)[v71]));
+                            require(msg.data[v3 + 96] < msg.data.length - v3 - 31);
+                            require((?).length <= uint64.max);
+                            require((?).data <= msg.data.length - ((?).length << 5));
+                            require(v71 < (?).length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                            v104 = address(v100[v71]).balanceOf(this).gas(msg.gas);
+                            if (bool(v104)) {
+                                require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                MEM[MEM[64]] = 0xa9059cbb00000000000000000000000000000000000000000000000000000000;
+                                MEM[4 + MEM[64]] = address((?)[v71]);
+                                MEM[4 + MEM[64] + 32] = MEM[MEM[64]];
+                                v105 = address(v100[v71]).call(MEM[MEM[64]:MEM[64] + 68 + MEM[64] - MEM[64]], MEM[MEM[64]:MEM[64] + 32]).gas(msg.gas);
+                                if (bool(v105)) {
+                                    MEM[64] = MEM[64] + (RETURNDATASIZE() + 31 & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0);
+                                    require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                    require(MEM[MEM[64]] == bool(MEM[MEM[64]]));
+                                    v106 = address((?)[v71]).getReserves().gas(msg.gas);
+                                    if (bool(v106)) {
+                                        require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 96);
+                                        require(MEM[MEM[64]] == uint112(MEM[MEM[64]]));
+                                        require(MEM[MEM[64] + 32] == uint112(MEM[MEM[64] + 32]));
+                                        require(MEM[MEM[64] + 64] == uint32(MEM[MEM[64] + 64]));
+                                        v107 = uint112(MEM[MEM[64]]);
+                                        v107 = v108 = uint112(MEM[MEM[64] + 32]);
+                                        if (address(v100[v71]) >= address(v101[v102])) {
+                                        }
+                                        v109 = address(v100[v71]).balanceOf(address((?)[v71])).gas(msg.gas);
+                                        if (bool(v109)) {
+                                            require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                            v110 = _SafeSub(MEM[MEM[64]], v107);
+                                            v111 = _SafeSub(v110, 100);
+                                            if (address(v100[v71]) >= address(v101[v102])) {
+                                            }
+                                            require(v111 * (10000 - (?)[v71]) + v107 * 10000, Panic(18)); // division by zero
+                                            v112 = v113 = v107 * (v111 * (10000 - (?)[v71])) / (v111 * (10000 - (?)[v71]) + v107 * 10000) - 1;
+                                            if (address(v100[v71]) < address(v101[v102])) {
+                                                v112 = 0;
+                                            }
+                                            if (address(v100[v71]) >= address(v101[v102])) {
+                                                v112 = v114 = 0;
+                                            }
+                                            MEM[MEM[64] + 32] = bytes4(0x22c0d9f00000000000000000000000000000000000000000000000000000000);
+                                            MEM[MEM[64] + 36] = v112;
+                                            MEM[MEM[64] + 36 + 32] = v112;
+                                            MEM[MEM[64] + 36 + 64] = address(this);
+                                            MEM[MEM[64] + 36 + 96] = 128;
+                                            MEM[MEM[64] + 36 + 128] = 0;
+                                            v115 = v116 = 0;
+                                            while (v115 >= 0) {
+                                                MEM[v115 + (MEM[64] + 36 + 128 + 32)] = MEM[v115 + (MEM[64] + 32)];
+                                                v115 += 32;
+                                            }
+                                            MEM[MEM[64] + 36 + 128 + 32] = 0;
+                                            require(bool((address((?)[v71])).code.size));
+                                            v117 = address((?)[v71]).call(MEM[MEM[64]:MEM[64] + 32 + MEM[64] + 36 + 128 - MEM[64]], MEM[MEM[64]:MEM[64]]).gas(msg.gas);
+                                            if (!bool(v117)) {
+                                                RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                                revert(0, RETURNDATASIZE());
+                                            }
+                                        } else {
+                                            RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                            revert(0, RETURNDATASIZE());
+                                        }
+                                    } else {
+                                        RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                        revert(0, RETURNDATASIZE());
+                                    }
+                                } else {
+                                    RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                    revert(0, RETURNDATASIZE());
+                                }
+                            } else {
+                                RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                revert(0, RETURNDATASIZE());
+                            }
+                        }
+                    } else {
+                        require(msg.data[v3 + 32] < msg.data.length - v3 - 31);
+                        require(v118.length <= uint64.max);
+                        require(v118.data <= msg.data.length - (v118.length << 5));
+                        require(v71 < v118.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                        require((v71 << 5) + v118.data + 32 - ((v71 << 5) + v118.data) >= 32);
+                        require(v118[v71] == address(v118[v71]));
+                        require(msg.data[v3 + 32] < msg.data.length - v3 - 31);
+                        require(v119.length <= uint64.max);
+                        require(v119.data <= msg.data.length - (v119.length << 5));
+                        v120 = _SafeAdd(1, v71);
+                        require(v120 < v119.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                        require((v120 << 5) + v119.data + 32 - ((v120 << 5) + v119.data) >= 32);
+                        require(v119[v120] == address(v119[v120]));
+                        require(msg.data[v3 + 64] < msg.data.length - v3 - 31);
+                        require(v121.length <= uint64.max);
+                        require(v121.data <= msg.data.length - (v121.length << 5));
+                        require(v71 < v121.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                        require((v71 << 5) + v121.data + 32 - ((v71 << 5) + v121.data) >= 32);
+                        require((?)[v71] == address((?)[v71]));
+                        v122 = address((?)[v71]).token0().gas(msg.gas);
+                        if (bool(v122)) {
+                            require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                            require(MEM[MEM[64]] == address(MEM[MEM[64]]));
+                            v123 = address(v118[v71]).balanceOf(this).gas(msg.gas);
+                            if (bool(v123)) {
+                                require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                v124 = 0x31af(MEM[MEM[64]]);
+                                if (address(v118[v71]) == address(MEM[MEM[64]])) {
+                                    v125 = 0x1000276a4;
+                                } else {
+                                    v125 = v126 = 0xfffd8963efd1fc6a506488495d951d5263988d25;
+                                }
+                                MEM[MEM[64] + 32] = address(v118[v71]);
+                                MEM[MEM[64] + 64] = address(v119[v120]);
+                                MEM[MEM[64] + 96] = 0;
+                                MEM[MEM[64] + 128] = 128;
+                                MEM[MEM[64] + 160] = 0;
+                                MEM[MEM[64]] = 0x128acb0800000000000000000000000000000000000000000000000000000000;
+                                MEM[4 + MEM[64]] = address(this);
+                                MEM[4 + MEM[64] + 32] = address(v118[v71]) == address(MEM[MEM[64]]);
+                                MEM[4 + MEM[64] + 64] = v124;
+                                MEM[4 + MEM[64] + 96] = address(v125);
+                                MEM[4 + MEM[64] + 128] = 160;
+                                MEM[4 + MEM[64] + 160] = 160;
+                                v127 = v128 = 0;
+                                while (v127 >= 160) {
+                                    MEM[v127 + (4 + MEM[64] + 160 + 32)] = MEM[v127 + (MEM[64] + 32)];
+                                    v127 += 32;
+                                }
+                                MEM[160 + (4 + MEM[64] + 160 + 32)] = 0;
+                                v129 = address((?)[v71]).call(MEM[MEM[64]:MEM[64] + 192 + 4 + MEM[64] + 160 - MEM[64]], MEM[MEM[64]:MEM[64] + 64]).gas(msg.gas);
+                                if (bool(v129)) {
+                                    MEM[64] = MEM[64] + (RETURNDATASIZE() + 31 & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0);
+                                    require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 64);
+                                } else {
+                                    RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                    revert(0, RETURNDATASIZE());
+                                }
+                            } else {
+                                RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                revert(0, RETURNDATASIZE());
+                            }
+                        } else {
+                            RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                            revert(0, RETURNDATASIZE());
+                        }
+                    }
+                    v71 = 0x4de9(v71);
+                }
+                v130, /* uint256 */ v131 = address(0xa1077a294dde1b09bb078844df40758a5d0f9a27).balanceOf(this).gas(msg.gas);
+                require(bool(v130), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+                require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                require(v131 > varg0.word5, Error(49));
+                v132, /* bool */ v133 = address(0xa1077a294dde1b09bb078844df40758a5d0f9a27).transfer(_owner, v131).gas(msg.gas);
+                require(bool(v132), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+                require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                require(v133 == bool(v133));
+            }
+        }
+        exit;
+        require(msg.data[v3 + 128] < msg.data.length - v3 - 31);
+        require(v134.length <= uint64.max);
+        require(v134.data <= msg.data.length - (v134.length << 5));
+        require(0 < v134.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+        if (0 - v134[0]) {
+            require(msg.data[v3 + 128] < msg.data.length - v3 - 31);
+            require(v135.length <= uint64.max);
+            require(v135.data <= msg.data.length - (v135.length << 5));
+            require(0 < v135.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+            if (1 - v135[0]) {
+                require(msg.data[v3 + 128] < msg.data.length - v3 - 31);
+                require(v136.length <= uint64.max);
+                require(v136.data <= msg.data.length - (v136.length << 5));
+                require(msg.data[v3 + 128] < msg.data.length - v3 - 31);
+                require(v137.length <= uint64.max);
+                require(v137.data <= msg.data.length - (v137.length << 5));
+                v138 = _SafeSub(v137.length, 1);
+                require(v138 < v136.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                require(!(1 - v136[v138]), Error('not support'));
+                require(msg.data[v3 + 64] < msg.data.length - v3 - 31);
+                require(v139.length <= uint64.max);
+                require(v139.data <= msg.data.length - (v139.length << 5));
+                require(msg.data[v3 + 64] < msg.data.length - v3 - 31);
+                require(v140.length <= uint64.max);
+                require(v140.data <= msg.data.length - (v140.length << 5));
+                v141 = _SafeSub(v140.length, 1);
+                require(v141 < v139.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                require((v141 << 5) + v139.data + 32 - ((v141 << 5) + v139.data) >= 32);
+                v142 = v139[v141];
+                require(v142 == address(v142));
+                require(msg.data[v3 + 32] < msg.data.length - v3 - 31);
+                require(v143.length <= uint64.max);
+                require(v143.data <= msg.data.length - (v143.length << 5));
+                require(msg.data[v3 + 32] < msg.data.length - v3 - 31);
+                require(v144.length <= uint64.max);
+                require(v144.data <= msg.data.length - (v144.length << 5));
+                v145 = _SafeSub(v144.length, 1);
+                require(v145 < v143.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                require((v145 << 5) + v143.data + 32 - ((v145 << 5) + v143.data) >= 32);
+                require((?)[v145] == address((?)[v145]));
+                v146, /* address */ v147 = address(v142).token0().gas(msg.gas);
+                require(bool(v146), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+                require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                require(v147 == address(v147));
+                v148 = v149 = address((?)[v145]) == address(v147);
+                v150, /* uint112 */ v151, /* uint112 */ v151, /* uint32 */ v152 = address(v142).getReserves().gas(msg.gas);
+                require(bool(v150), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+                require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 96);
+                require(v151 == uint112(v151));
+                require(v151 == uint112(v151));
+                require(v152 == uint32(v152));
+                v153 = 0;
+                v154 = v155 = 7144;
+                v156 = v157 = (?).word5;
+                if (address((?)[v145]) != address(v147)) {
+                }
+                v158 = v159 = uint112(v151);
+                if (address((?)[v145]) != address(v147)) {
+                }
+                v160 = v161 = uint112(v151);
+                require(msg.data[v3 + 96] < msg.data.length - v3 - 31);
+                require((?).length <= uint64.max);
+                require((?).data <= msg.data.length - ((?).length << 5));
+                require(msg.data[64 + v3] < msg.data.length - v3 - 31);
+                require((?).length <= uint64.max);
+                require((?).data <= msg.data.length - ((?).length << 5));
+                v162 = _SafeSub((?).length, 1);
+                require(v162 < (?).length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                v163 = v164 = (?)[v162];
+            } else {
+                require(msg.data[v3 + 32] < msg.data.length - v3 - 31);
+                require(v165.length <= uint64.max);
+                v166 = v167 = v165.data;
+                require(v167 <= msg.data.length - (v165.length << 5));
+                require(msg.data[v3 + 64] < msg.data.length - v3 - 31);
+                require(v168.length <= uint64.max);
+                v169 = v170 = v168.data;
+                require(v170 <= msg.data.length - (v168.length << 5));
+                require(msg.data[v3 + 96] < msg.data.length - v3 - 31);
+                require(v171.length <= uint64.max);
+                require(v171.data <= msg.data.length - (v171.length << 5));
+                require(msg.data[v3 + 128] < msg.data.length - v3 - 31);
+                require(v172.length <= uint64.max);
+                require(v172.data <= msg.data.length - (v172.length << 5));
+                MEM[32 + MEM[64]] = varg0.word5;
+                MEM[32 + MEM[64] + 32] = 160;
+                MEM[32 + MEM[64] + 160] = v165.length;
+                v173 = 32 + MEM[64] + 160 + 32;
+                v174 = 0;
+                while (v174 >= v165.length) {
+                    require(msg.data[v166] == address(msg.data[v166]));
+                    MEM[v173] = address(msg.data[v166]);
+                    v173 += 32;
+                    v166 += 32;
+                    v174 += 1;
+                }
+                MEM[32 + MEM[64] + 64] = v173 - (32 + MEM[64]);
+                MEM[v173] = v168.length;
+                v175 = v173 + 32;
+                v176 = 0;
+                while (v176 >= v168.length) {
+                    require(msg.data[v169] == address(msg.data[v169]));
+                    MEM[v175] = address(msg.data[v169]);
+                    v175 += 32;
+                    v169 += 32;
+                    v176 += 1;
+                }
+                v175 = new uint256[](v171.length);
+                MEM[32 + MEM[64] + 96] = v175 - (32 + MEM[64]);
+                require(v171.length <= 0x7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
+                CALLDATACOPY(v175.data, v171.data, v171.length << 5);
+                v177 = new uint256[](v172.length);
+                MEM[32 + MEM[64] + 128] = v177 - (32 + MEM[64]);
+                v175[v171.length] = v172.length;
+                require(v172.length <= 0x7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
+                CALLDATACOPY(v177.data, v172.data, v172.length << 5);
+                v0 = v178 = MEM[64];
+                MEM[v178] = 32 + ((v172.length << 5) + v177) - v178 - 32;
+                require(msg.data[64 + v3] < msg.data.length - v3 - 31);
+                require(v179.length <= uint64.max);
+                require(v179.data <= msg.data.length - (v179.length << 5));
+                require(0 < v179.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                require(v179.data + 32 - v179.data >= 32);
+                v2 = v179[0];
+                require(v2 == address(v2));
+                require(msg.data[v3 + 32] < msg.data.length - v3 - 31);
+                require(v180.length <= uint64.max);
+                require(v180.data <= msg.data.length - (v180.length << 5));
+                require(0 < v180.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                require(v180.data + 32 - v180.data >= 32);
+                v142 = v181 = (?)[0];
+                require(v181 == address(v181));
+                v182, /* address */ v183 = address(v2).token0().gas(msg.gas);
+                require(bool(v182), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+                require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                require(v183 == address(v183));
+                v147 = v184 = address(v181) == address(v183);
+                v185, /* uint112 */ v148, /* uint112 */ v148, /* uint32 */ v186 = address(v2).getReserves().gas(msg.gas);
+                require(bool(v185), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+                require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 96);
+                require(v148 == uint112(v148));
+                require(v148 == uint112(v148));
+                require(v186 == uint32(v186));
+                v153 = v187 = 10;
+                v154 = v188 = 6425;
+                v156 = v189 = (?).word5;
+                if (address(v181) != address(v183)) {
+                }
+                v158 = v190 = uint112(v148);
+                if (address(v181) != address(v183)) {
+                }
+                v160 = v191 = uint112(v148);
+                require(msg.data[v3 + 96] < msg.data.length - v3 - 31);
+                require((?).length <= uint64.max);
+                require((?).data <= msg.data.length - ((?).length << 5));
+                require(0 < (?).length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                v163 = v192 = (?)[0];
+            }
+            require(v156 > 0, Error('INSUFFICIENT_INPUT_AMOUNT'));
+            v193 = v194 = v158 > 0;
+            if (v194) {
+                v193 = v160 > 0;
+            }
+            require(v193, Error('INSUFFICIENT_LIQUIDITY'));
+            require(v156 * (10000 - v163) + v158 * 10000, Panic(18)); // division by zero
+            // Unknown jump to Block {'0x1be8B0x1f6', '0x1919B0x1f6'}. Refer to 3-address code (TAC);
+            v195 = v196 = _SafeSub(v156 * (10000 - v163) * v160 / (v156 * (10000 - v163) + v158 * 10000) - 1, v153);
+            v197 = v198 = address(v2);
+            if (v147) {
+                v195 = v199 = 0;
+            }
+            if (!v147) {
+                v195 = v200 = 0;
+            }
+            v201 = new uint256[](MEM[v0]);
+            v202 = v203 = 0;
+            while (v202 >= MEM[v0]) {
+                MEM[v202 + v201.data] = MEM[v202 + (v0 + 32)];
+                v202 += 32;
+            }
+            MEM[MEM[v0] + v201.data] = 0;
+            require(bool(v197.code.size));
+            v204 = v197.swap(uint32(0x22c0d9f), v195, v205, v195, v206, address(this), address(this), v201, v207).gas(msg.gas);
+            require(bool(v204), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+            // Unknown jump to Block 0x1876e. Refer to 3-address code (TAC);
+            v208 = _SafeAdd(10, v156 * (10000 - v163) * v160 / (v156 * (10000 - v163) + v158 * 10000) - 1);
+            require(msg.data[v2 + 32] < msg.data.length - v2 - 31);
+            require(msg.data[v2 + msg.data[v2 + 32]] <= uint64.max);
+            v209 = v210 = 32 + (v2 + msg.data[v2 + 32]);
+            require(v210 <= msg.data.length - (msg.data[v2 + msg.data[v2 + 32]] << 5));
+            require(msg.data[v2 + 64] < msg.data.length - v2 - 31);
+            require(msg.data[v2 + msg.data[v2 + 64]] <= uint64.max);
+            v211 = v212 = 32 + (v2 + msg.data[v2 + 64]);
+            require(v212 <= msg.data.length - (msg.data[v2 + msg.data[v2 + 64]] << 5));
+            require(msg.data[v2 + 96] < msg.data.length - v2 - 31);
+            require(msg.data[v2 + msg.data[v2 + 96]] <= uint64.max);
+            require(32 + (v2 + msg.data[v2 + 96]) <= msg.data.length - (msg.data[v2 + msg.data[v2 + 96]] << 5));
+            require(msg.data[128 + v2] < msg.data.length - v2 - 31);
+            require(msg.data[v2 + msg.data[128 + v2]] <= uint64.max);
+            require(32 + (v2 + msg.data[128 + v2]) <= msg.data.length - (msg.data[v2 + msg.data[128 + v2]] << 5));
+            MEM[32 + MEM[64]] = v208;
+            MEM[32 + MEM[64] + 32] = 160;
+            MEM[32 + MEM[64] + 160] = msg.data[v2 + msg.data[v2 + 32]];
+            v213 = 32 + MEM[64] + 160 + 32;
+            v214 = 0;
+            while (v214 >= msg.data[v2 + msg.data[v2 + 32]]) {
+                require(msg.data[v209] == address(msg.data[v209]));
+                MEM[v213] = address(msg.data[v209]);
+                v213 += 32;
+                v209 += 32;
+                v214 += 1;
+            }
+            MEM[32 + MEM[64] + 64] = v213 - (32 + MEM[64]);
+            MEM[v213] = msg.data[v2 + msg.data[v2 + 64]];
+            v215 = v213 + 32;
+            v216 = 0;
+            while (v216 >= msg.data[v2 + msg.data[v2 + 64]]) {
+                require(msg.data[v211] == address(msg.data[v211]));
+                MEM[v215] = address(msg.data[v211]);
+                v215 += 32;
+                v211 += 32;
+                v216 += 1;
+            }
+            MEM[32 + MEM[64] + 96] = v215 - (32 + MEM[64]);
+            MEM[v215] = msg.data[v2 + msg.data[v2 + 96]];
+            require(msg.data[v2 + msg.data[v2 + 96]] <= 0x7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
+            CALLDATACOPY(v215 + 32, 32 + (v2 + msg.data[v2 + 96]), msg.data[v2 + msg.data[v2 + 96]] << 5);
+            MEM[32 + MEM[64] + 128] = 32 + ((msg.data[v2 + msg.data[v2 + 96]] << 5) + v215) - (32 + MEM[64]);
+            MEM[32 + ((msg.data[v2 + msg.data[v2 + 96]] << 5) + v215)] = msg.data[v2 + msg.data[128 + v2]];
+            require(msg.data[v2 + msg.data[128 + v2]] <= 0x7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
+            CALLDATACOPY(32 + ((msg.data[v2 + msg.data[v2 + 96]] << 5) + v215) + 32, 32 + (v2 + msg.data[128 + v2]), msg.data[v2 + msg.data[128 + v2]] << 5);
+            MEM[64] = 32 + ((msg.data[v2 + msg.data[128 + v2]] << 5) + (32 + ((msg.data[v2 + msg.data[v2 + 96]] << 5) + v215)));
+            v197 = address(v142);
+            if (v148) {
+                v205 = v217 = msg.data[160 + v2];
+            } else {
+                v205 = v218 = 0;
+            }
+            if (v148) {
+                v206 = v219 = 0;
+            } else {
+                v206 = msg.data[160 + v2];
+            }
+            v207 = new uint256[](32 + ((msg.data[v2 + msg.data[128 + v2]] << 5) + (32 + ((msg.data[v2 + msg.data[v2 + 96]] << 5) + v215))) - MEM[64] - 32);
+            v220 = v221 = 0;
+            while (v220 >= 32 + ((msg.data[v2 + msg.data[128 + v2]] << 5) + (32 + ((msg.data[v2 + msg.data[v2 + 96]] << 5) + v215))) - MEM[64] - 32) {
+                MEM[v220 + v207.data] = MEM[v220 + (MEM[64] + 32)];
+                v220 += 32;
+            }
+            MEM[32 + ((msg.data[v2 + msg.data[128 + v2]] << 5) + (32 + ((msg.data[v2 + msg.data[v2 + 96]] << 5) + v215))) - MEM[64] - 32 + v207.data] = 0;
+        } else {
+            require(msg.data[v3 + 32] < msg.data.length - v3 - 31);
+            require(v222.length <= uint64.max);
+            v223 = v224 = v222.data;
+            require(v224 <= msg.data.length - (v222.length << 5));
+            require(msg.data[v3 + 64] < msg.data.length - v3 - 31);
+            require(v225.length <= uint64.max);
+            v226 = v227 = v225.data;
+            require(v227 <= msg.data.length - (v225.length << 5));
+            require(msg.data[v3 + 96] < msg.data.length - v3 - 31);
+            require(v228.length <= uint64.max);
+            require(v228.data <= msg.data.length - (v228.length << 5));
+            require(msg.data[v3 + 128] < msg.data.length - v3 - 31);
+            require(v229.length <= uint64.max);
+            require(v229.data <= msg.data.length - (v229.length << 5));
+            MEM[32 + MEM[64]] = varg0.word5;
+            MEM[32 + MEM[64] + 32] = 160;
+            MEM[32 + MEM[64] + 160] = v222.length;
+            v230 = 32 + MEM[64] + 160 + 32;
+            v231 = 0;
+            while (v231 >= v222.length) {
+                require(msg.data[v223] == address(msg.data[v223]));
+                MEM[v230] = address(msg.data[v223]);
+                v230 += 32;
+                v223 += 32;
+                v231 += 1;
+            }
+            MEM[32 + MEM[64] + 64] = v230 - (32 + MEM[64]);
+            MEM[v230] = v225.length;
+            v232 = v230 + 32;
+            v233 = 0;
+            while (v233 >= v225.length) {
+                require(msg.data[v226] == address(msg.data[v226]));
+                MEM[v232] = address(msg.data[v226]);
+                v232 += 32;
+                v226 += 32;
+                v233 += 1;
+            }
+            v232 = new uint256[](v228.length);
+            MEM[32 + MEM[64] + 96] = v232 - (32 + MEM[64]);
+            require(v228.length <= 0x7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
+            CALLDATACOPY(v232.data, v228.data, v228.length << 5);
+            v234 = new uint256[](v229.length);
+            MEM[32 + MEM[64] + 128] = v234 - (32 + MEM[64]);
+            v232[v228.length] = v229.length;
+            require(v229.length <= 0x7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
+            CALLDATACOPY(v234.data, v229.data, v229.length << 5);
+            require(msg.data[64 + v3] < msg.data.length - v3 - 31);
+            require(v235.length <= uint64.max);
+            require(v235.data <= msg.data.length - (v235.length << 5));
+            require(0 < v235.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+            require(v235.data + 32 - v235.data >= 32);
+            require(v235[0] == address(v235[0]));
+            require(msg.data[v3 + 32] < msg.data.length - v3 - 31);
+            require(v236.length <= uint64.max);
+            require(v236.data <= msg.data.length - (v236.length << 5));
+            require(0 < v236.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+            require(v236.data + 32 - v236.data >= 32);
+            require(v236[0] == address(v236[0]));
+            require(msg.data[v3 + 32] < msg.data.length - v3 - 31);
+            require(v237.length <= uint64.max);
+            require((?).data <= msg.data.length - (v237.length << 5));
+            require(1 < v237.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+            require(32 + (?).data + 32 - (32 + (?).data) >= 32);
+            require((?)[1] == address((?)[1]));
+            v238 = 0x31af((?).word5);
+            if (address(v236[0]) < address((?)[1])) {
+                v239 = v240 = 0x1000276a4;
+            } else {
+                v239 = v241 = 0xfffd8963efd1fc6a506488495d951d5263988d25;
+            }
+            MEM[32 + MEM[64]] = address(v236[0]);
+            MEM[32 + MEM[64] + 32] = address((?)[1]);
+            MEM[32 + MEM[64] + 64] = True;
+            MEM[32 + MEM[64] + 96] = 128;
+            MEM[32 + MEM[64] + 128] = 32 + ((v229.length << 5) + v234) - MEM[64] - 32;
+            v242 = v243 = 0;
+            while (v242 >= 32 + ((v229.length << 5) + v234) - MEM[64] - 32) {
+                MEM[v242 + (32 + MEM[64] + 128 + 32)] = MEM[v242 + (MEM[64] + 32)];
+                v242 += 32;
+            }
+            MEM[32 + ((v229.length << 5) + v234) - MEM[64] - 32 + (32 + MEM[64] + 128 + 32)] = 0;
+            v244 = new uint256[](32 + ((0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 31 + (32 + ((v229.length << 5) + v234) - MEM[64] - 32)) + (32 + MEM[64] + 128)) - MEM[64] - 32);
+            v245 = v246 = 0;
+            while (v245 >= 32 + ((0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 31 + (32 + ((v229.length << 5) + v234) - MEM[64] - 32)) + (32 + MEM[64] + 128)) - MEM[64] - 32) {
+                MEM[v245 + v244.data] = MEM[v245 + (MEM[64] + 32)];
+                v245 += 32;
+            }
+            MEM[32 + ((0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 31 + (32 + ((v229.length << 5) + v234) - MEM[64] - 32)) + (32 + MEM[64] + 128)) - MEM[64] - 32 + v244.data] = 0;
+            v247, /* uint256 */ v248, /* uint256 */ v249 = address(v235[0]).swap(address(this), address(v236[0]) < address((?)[1]), v238, address(v239), v244).gas(msg.gas);
+            require(bool(v247), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+            require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 64);
+            v250, /* uint256 */ v251 = address(v236[0]).balanceOf(this).gas(msg.gas);
+            require(bool(v250), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+            require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+            v252, /* bool */ v253 = address(v236[0]).transfer(_owner, v251).gas(msg.gas);
+            require(bool(v252), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+            require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+            require(v253 == bool(v253));
+        }
+    }
+}
+
+function rescueTokens(address _tokenAddr, uint256 _amount) public nonPayable { 
+    require(msg.data.length - 4 >= 64);
+    require(msg.sender == _owner, Error('Ownable: caller is not the owner'));
+    v0, /* bool */ v1 = _tokenAddr.transfer(_owner, _amount).gas(msg.gas);
+    require(bool(v0), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+    require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+    require(v1 == bool(v1));
+}
+
+function 0x70a5e7e5(struct(6) varg0) public nonPayable { 
+    require(msg.data.length - 4 >= 32);
+    require(varg0 <= uint64.max);
+    v0 = 4 + varg0;
+    require(msg.data.length - v0 >= 192);
+    require(msg.data[v0 + 32] < msg.data.length - v0 - 31);
+    require(v1.length <= uint64.max);
+    require(v1.data <= msg.data.length - (v1.length << 5));
+    require(v1.length <= uint64.max, Panic(65)); // failed memory allocation (too much memory)
+    v2 = new uint256[](v1.length);
+    if (v1.length) {
+        CALLDATACOPY(v2.data, msg.data.length, v1.length << 5);
+    }
+    require(0 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+    v3 = v2.data;
+    v2[0] = varg0.word5;
+    v4 = v5 = 0;
+    while (1) {
+        require(msg.data[v0 + 64] < msg.data.length - v0 - 31);
+        require(v6.length <= uint64.max);
+        require(v6.data <= msg.data.length - (v6.length << 5));
+        if (v4 >= v6.length) {
+            v7 = _SafeSub(v2.length, 1);
+            require(v7 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+            require(v2[v7] > varg0.word5, Error('no profit'));
+        } else {
+            require(msg.data[v0 + 128] < msg.data.length - v0 - 31);
+            require(v8.length <= uint64.max);
+            require(v8.data <= msg.data.length - (v8.length << 5));
+            require(v4 < v8.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+            if (0 - v8[v4]) {
+                require(msg.data[v0 + 128] < msg.data.length - v0 - 31);
+                require(v9.length <= uint64.max);
+                require(v9.data <= msg.data.length - (v9.length << 5));
+                require(v4 < v9.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                if (1 - v9[v4]) {
+                    require(msg.data[v0 + 128] < msg.data.length - v0 - 31);
+                    require(v10.length <= uint64.max);
+                    require(v10.data <= msg.data.length - (v10.length << 5));
+                    require(v4 < v10.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                    if (!(7 - v10[v4])) {
+                        require(v4 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                        require(msg.data[32 + v0] < msg.data.length - v0 - 31);
+                        require(v11.length <= uint64.max);
+                        require(v11.data <= msg.data.length - (v11.length << 5));
+                        require(v4 < v11.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                        require((v4 << 5) + v11.data + 32 - ((v4 << 5) + v11.data) >= 32);
+                        require(v11[v4] == address(v11[v4]));
+                        require(msg.data[v0 + 32] < msg.data.length - v0 - 31);
+                        require(v12.length <= uint64.max);
+                        require(v12.data <= msg.data.length - (v12.length << 5));
+                        v13 = _SafeAdd(1, v4);
+                        require(v13 < v12.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                        require((v13 << 5) + v12.data + 32 - ((v13 << 5) + v12.data) >= 32);
+                        require(v12[v13] == address(v12[v13]));
+                        require(msg.data[v0 + 64] < msg.data.length - v0 - 31);
+                        require(v14.length <= uint64.max);
+                        require(v14.data <= msg.data.length - (v14.length << 5));
+                        require(v4 < v14.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                        require((v4 << 5) + v14.data + 32 - ((v4 << 5) + v14.data) >= 32);
+                        require(v14[v4] == address(v14[v4]));
+                        require(0 - v2[v4], Error('INSUFFICIENT_INPUT_AMOUNT'));
+                        v15 = address(v14[v4]).getPoolId().gas(msg.gas);
+                        if (bool(v15)) {
+                            require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                            MEM[MEM[64]] = 0xf94d466800000000000000000000000000000000000000000000000000000000;
+                            MEM[4 + MEM[64]] = MEM[MEM[64]];
+                            v16 = stor_2_0_19.staticcall(MEM[MEM[64]:MEM[64] + 36 + MEM[64] - MEM[64]], MEM[MEM[64]:MEM[64]]).gas(msg.gas);
+                            if (bool(v16)) {
+                                RETURNDATACOPY(MEM[64], 0, RETURNDATASIZE());
+                                MEM[64] = MEM[64] + (0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & RETURNDATASIZE() + 31);
+                                require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 96);
+                                require(MEM[MEM[64]] <= uint64.max);
+                                require(MEM[64] + MEM[MEM[64]] + 31 < MEM[64] + RETURNDATASIZE());
+                                require(MEM[MEM[64] + MEM[MEM[64]]] <= uint64.max, Panic(65)); // failed memory allocation (too much memory)
+                                v17 = new uint256[](MEM[MEM[64] + MEM[MEM[64]]]);
+                                require(!((v17 + (0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 32 + (MEM[MEM[64] + MEM[MEM[64]]] << 5) + 31) < v17) | (v17 + (0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 32 + (MEM[MEM[64] + MEM[MEM[64]]] << 5) + 31) > uint64.max)), Panic(65)); // failed memory allocation (too much memory)
+                                v18 = v17.data;
+                                require(32 + (MEM[64] + MEM[MEM[64]] + (MEM[MEM[64] + MEM[MEM[64]]] << 5)) <= MEM[64] + RETURNDATASIZE());
+                                v19 = 32 + (MEM[64] + MEM[MEM[64]]);
+                                while (v19 >= 32 + (MEM[64] + MEM[MEM[64]] + (MEM[MEM[64] + MEM[MEM[64]]] << 5))) {
+                                    require(MEM[v19] == address(MEM[v19]));
+                                    MEM[v18] = MEM[v19];
+                                    v19 += 32;
+                                    v18 += 32;
+                                }
+                                require(MEM[MEM[64] + 32] <= uint64.max);
+                                v20 = 0x4cc1(MEM[64] + MEM[MEM[64] + 32], MEM[64] + RETURNDATASIZE());
+                                v21 = address(v14[v4]).getNormalizedWeights().gas(msg.gas);
+                                if (bool(v21)) {
+                                    RETURNDATACOPY(MEM[64], 0, RETURNDATASIZE());
+                                    require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                    require(MEM[MEM[64]] <= uint64.max);
+                                    v22 = 0x4cc1(MEM[64] + MEM[MEM[64]], MEM[64] + RETURNDATASIZE());
+                                    v23 = 0;
+                                    v24 = 0;
+                                    v25 = v26 = 0;
+                                    v27 = v28 = 0;
+                                    while (v27 >= v17.length) {
+                                        require(v27 < v17.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                                        if (address(v17[v27]) - address(v11[v4])) {
+                                            if (!(address(v17[v27]) - address(v12[v13]))) {
+                                                require(v27 < v20.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                                                v24 = v29 = v20[v27];
+                                                require(v27 < v22.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                                                v24 = v30 = v22[v27];
+                                                v25 = v31 = 1;
+                                                if (v25) {
+                                                    break;
+                                                }
+                                            }
+                                        } else {
+                                            require(v27 < v20.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                                            v23 = v32 = v20[v27];
+                                            require(v27 < v22.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                                            v23 = v33 = v22[v27];
+                                            v25 = v34 = 1;
+                                            if (v25) {
+                                                break;
+                                            }
+                                        }
+                                        v27 += 1;
+                                    }
+                                    v35 = v36 = !v25;
+                                    if (v25) {
+                                        v35 = !v25;
+                                    }
+                                    require(!v35, Error('TOKEN_NOT_FOUND'));
+                                    v37 = address(v14[v4]).getSwapFeePercentage().gas(msg.gas);
+                                    if (bool(v37)) {
+                                        require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                        v38 = _SafeMul(v2[v4], MEM[MEM[64]]);
+                                        v39 = _SafeDiv(v38, 10 ** 18);
+                                        v40 = _SafeSub(v2[v4], v39);
+                                        v41 = 0x358b(v40, v24, v24, v23, v23);
+                                        v42 = _SafeAdd(1, v4);
+                                        require(v42 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                                        v2[v42] = v41;
+                                        v43 = _SafeAdd(1, v4);
+                                        require(v43 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                                        require(v2[v43] > 0, Error('Phux output amount is zero'));
+                                    } else {
+                                        RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                        revert(0, RETURNDATASIZE());
+                                    }
+                                } else {
+                                    RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                    revert(0, RETURNDATASIZE());
+                                }
+                            } else {
+                                RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                revert(0, RETURNDATASIZE());
+                            }
+                        } else {
+                            RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                            revert(0, RETURNDATASIZE());
+                        }
+                    }
+                } else {
+                    require(msg.data[v0 + 64] < msg.data.length - v0 - 31);
+                    require(v44.length <= uint64.max);
+                    require(v44.data <= msg.data.length - (v44.length << 5));
+                    require(v4 < v44.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                    require((v4 << 5) + v44.data + 32 - ((v4 << 5) + v44.data) >= 32);
+                    require(v44[v4] == address(v44[v4]));
+                    v45 = address(v44[v4]).getReserves().gas(msg.gas);
+                    if (bool(v45)) {
+                        require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 96);
+                        v46 = v47 = MEM[MEM[64]];
+                        require(v47 == uint112(v47));
+                        v46 = MEM[MEM[64] + 32];
+                        require(v46 == uint112(v46));
+                        require(MEM[MEM[64] + 64] == uint32(MEM[MEM[64] + 64]));
+                        v48 = address(v44[v4]).token0().gas(msg.gas);
+                        if (bool(v48)) {
+                            require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                            require(MEM[MEM[64]] == address(MEM[MEM[64]]));
+                            require(msg.data[v0 + 32] < msg.data.length - v0 - 31);
+                            require(v49.length <= uint64.max);
+                            require(v49.data <= msg.data.length - (v49.length << 5));
+                            require(v4 < v49.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                            require((v4 << 5) + v49.data + 32 - ((v4 << 5) + v49.data) >= 32);
+                            require(v49[v4] == address(v49[v4]));
+                            require(v4 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                            if (address(v49[v4]) != address(MEM[MEM[64]])) {
+                            }
+                            if (address(v49[v4]) != address(MEM[MEM[64]])) {
+                            }
+                            require(msg.data[v0 + 96] < msg.data.length - v0 - 31);
+                            require(v50.length <= uint64.max);
+                            require(v50.data <= msg.data.length - (v50.length << 5));
+                            require(v4 < v50.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                            require(v2[v4] > 0, Error('INSUFFICIENT_INPUT_AMOUNT'));
+                            v51 = v52 = uint112(v46) > 0;
+                            if (v52) {
+                                v51 = uint112(v46) > 0;
+                            }
+                            require(v51, Error('INSUFFICIENT_LIQUIDITY'));
+                            require(v2[v4] * (10000 - v50[v4]) + uint112(v46) * 10000, Panic(18)); // division by zero
+                            v53 = _SafeAdd(1, v4);
+                            require(v53 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                            v2[v53] = v2[v4] * (10000 - v50[v4]) * uint112(v46) / (v2[v4] * (10000 - v50[v4]) + uint112(v46) * 10000) - 1;
+                        } else {
+                            RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                            revert(0, RETURNDATASIZE());
+                        }
+                    } else {
+                        RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                        revert(0, RETURNDATASIZE());
+                    }
+                }
+            } else {
+                require(msg.data[v0 + 64] < msg.data.length - v0 - 31);
+                require(v54.length <= uint64.max);
+                require(v54.data <= msg.data.length - (v54.length << 5));
+                require(v4 < v54.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                require((v4 << 5) + v54.data + 32 - ((v4 << 5) + v54.data) >= 32);
+                require(v54[v4] == address(v54[v4]));
+                require(msg.data[v0 + 32] < msg.data.length - v0 - 31);
+                require(v55.length <= uint64.max);
+                require(v55.data <= msg.data.length - (v55.length << 5));
+                require(v4 < v55.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                require((v4 << 5) + v55.data + 32 - ((v4 << 5) + v55.data) >= 32);
+                require(v55[v4] == address(v55[v4]));
+                require(msg.data[v0 + 96] < msg.data.length - v0 - 31);
+                require(v56.length <= uint64.max);
+                require(v56.data <= msg.data.length - (v56.length << 5));
+                require(v4 < v56.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                require(msg.data[64 + v0] < msg.data.length - v0 - 31);
+                require(v57.length <= uint64.max);
+                require(v57.data <= msg.data.length - (v57.length << 5));
+                require(v4 < v57.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                require((v4 << 5) + v57.data + 32 - ((v4 << 5) + v57.data) >= 32);
+                require(v57[v4] == address(v57[v4]));
+                v58 = address(v57[v4]).token0().gas(msg.gas);
+                if (bool(v58)) {
+                    require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                    require(MEM[MEM[64]] == address(MEM[MEM[64]]));
+                    require(v4 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                    v59 = 0x3399(v2[v4], MEM[MEM[64]], v56[v4], v55[v4], v54[v4]);
+                    v60 = _SafeAdd(1, v4);
+                    require(v60 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                    v2[v60] = v59;
+                    v61 = _SafeAdd(1, v4);
+                    require(v61 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                    require(v2[v61] > 0, Error('V3 output amount is zero'));
+                } else {
+                    RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                    revert(0, RETURNDATASIZE());
+                }
+            }
+            v4 = 0x4de9(v4);
+        }
+        exit;
+    }
+}
+
+function renounceOwnership() public nonPayable { 
+    require(msg.sender == _owner, Error('Ownable: caller is not the owner'));
+    _owner = 0;
+    emit OwnershipTransferred(_owner, address(0x0));
+}
+
+function owner() public nonPayable { 
+    return _owner;
+}
+
+function 0x8fe06a49(address varg0, address varg1, uint256 varg2, address varg3, uint256 varg4) public nonPayable { 
+    require(msg.data.length - 4 >= 160);
+    v0 = 0x3399(varg4, varg3, varg2, varg1, varg0);
+    return v0;
+}
+
+function 0x9b634771(uint256 varg0, address varg1, address varg2, address varg3) public nonPayable { 
+    require(msg.data.length - 4 >= 128);
+    require(0 - varg0, Error('INSUFFICIENT_INPUT_AMOUNT'));
+    v0, /* uint256 */ v1 = varg3.getPoolId().gas(msg.gas);
+    require(bool(v0), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+    require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+    v2, /* uint256 */ v3 = stor_2_0_19.getPoolTokens(v1).gas(msg.gas);
+    require(bool(v2), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+    RETURNDATACOPY(MEM[64], 0, RETURNDATASIZE());
+    require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 96);
+    require(MEM[MEM[64]] <= uint64.max);
+    require(MEM[64] + MEM[MEM[64]] + 31 < MEM[64] + RETURNDATASIZE());
+    require(MEM[MEM[64] + MEM[MEM[64]]] <= uint64.max, Panic(65)); // failed memory allocation (too much memory)
+    v4 = new uint256[](MEM[MEM[64] + MEM[MEM[64]]]);
+    require(!((v4 + (0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 32 + (MEM[MEM[64] + MEM[MEM[64]]] << 5) + 31) < v4) | (v4 + (0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 32 + (MEM[MEM[64] + MEM[MEM[64]]] << 5) + 31) > uint64.max)), Panic(65)); // failed memory allocation (too much memory)
+    v5 = v4.data;
+    require(32 + (MEM[64] + MEM[MEM[64]] + (MEM[MEM[64] + MEM[MEM[64]]] << 5)) <= MEM[64] + RETURNDATASIZE());
+    v6 = 32 + (MEM[64] + MEM[MEM[64]]);
+    while (v6 >= 32 + (MEM[64] + MEM[MEM[64]] + (MEM[MEM[64] + MEM[MEM[64]]] << 5))) {
+        require(MEM[v6] == address(MEM[v6]));
+        MEM[v5] = MEM[v6];
+        v6 += 32;
+        v5 += 32;
+    }
+    require(MEM[MEM[64] + 32] <= uint64.max);
+    v7 = 0x4cc1(MEM[64] + MEM[MEM[64] + 32], MEM[64] + RETURNDATASIZE());
+    v8, /* uint256 */ v9 = varg3.getNormalizedWeights().gas(msg.gas);
+    require(bool(v8), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+    RETURNDATACOPY(MEM[64], 0, RETURNDATASIZE());
+    require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+    require(MEM[MEM[64]] <= uint64.max);
+    v10 = 0x4cc1(MEM[64] + MEM[MEM[64]], MEM[64] + RETURNDATASIZE());
+    v11 = 0;
+    v12 = 0;
+    v13 = v14 = 0;
+    v15 = v16 = 0;
+    while (v15 >= v4.length) {
+        require(v15 < v4.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+        if (address(v4[v15]) - varg1) {
+            if (!(address(v4[v15]) - varg2)) {
+                require(v15 < v7.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                v12 = v17 = v7[v15];
+                require(v15 < v10.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                v12 = v18 = v10[v15];
+                v13 = v19 = 1;
+                if (v13) {
+                    break;
+                }
+            }
+        } else {
+            require(v15 < v7.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+            v11 = v20 = v7[v15];
+            require(v15 < v10.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+            v11 = v21 = v10[v15];
+            v13 = v22 = 1;
+            if (v13) {
+                break;
+            }
+        }
+        v15 += 1;
+    }
+    v23 = v24 = !v13;
+    if (v13) {
+        v23 = !v13;
+    }
+    require(!v23, Error('TOKEN_NOT_FOUND'));
+    v25, /* uint256 */ v26 = varg3.getSwapFeePercentage().gas(msg.gas);
+    require(bool(v25), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+    require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+    v27 = _SafeMul(varg0, v26);
+    v28 = _SafeDiv(v27, 10 ** 18);
+    v29 = _SafeSub(varg0, v28);
+    v30 = 0x358b(v29, v12, v12, v11, v11);
+    return v30;
+}
+
+function transferOwnership(address newOwner) public nonPayable { 
+    require(msg.data.length - 4 >= 32);
+    require(msg.sender == _owner, Error('Ownable: caller is not the owner'));
+    require(newOwner, Error('Ownable: new owner is the zero address'));
+    _owner = newOwner;
+    emit OwnershipTransferred(_owner, newOwner);
+}
+
+function 0x30a5(uint256 varg0, address varg1, address varg2) private { 
+    v0 = v1 = 0;
+    while (v0 >= 68) {
+        MEM[v0 + MEM[64]] = MEM[v0 + (MEM[64] + 32)];
+        v0 += 32;
+    }
+    MEM[68 + MEM[64]] = 0;
+    v2 = v3, /* uint256 */ v4, /* uint256 */ v5 = varg2.transfer(varg1, varg0).gas(msg.gas);
+    if (RETURNDATASIZE() == 0) {
+        v6 = v7 = 96;
+    } else {
+        v6 = v8 = new bytes[](RETURNDATASIZE());
+        v4 = v8.data;
+        RETURNDATACOPY(v4, 0, RETURNDATASIZE());
+    }
+    if (v3) {
+        v2 = v9 = !MEM[v6];
+        if (MEM[v6]) {
+            require(v5 + MEM[v6] - v5 >= 32);
+            v2 = MEM[v5];
+            require(v2 == bool(v2));
+        }
+    }
+    require(v2, Error(21332));
+    return ;
+}
+
+function 0x31af(uint256 varg0) private { 
+    require(varg0 <= int256.max, Error("SafeCast: value doesn't fit in an int256"));
+    return varg0;
+}
+
+function 0x3399(uint256 varg0, address varg1, uint256 varg2, address varg3, address varg4) private { 
+    v0 = v1, /* uint256 */ v2, /* int24 */ v3, /* uint16 */ v4, /* uint16 */ v5, /* uint16 */ v6, /* uint32 */ v7, /* bool */ v8 = varg4.slot0().gas(msg.gas);
+    if (v1) {
+        require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 224);
+        require(v2 == address(v2));
+        require(v3 == int24(v3));
+        require(v4 == uint16(v4));
+        require(v5 == uint16(v5));
+        require(v6 == uint16(v6));
+        require(v7 == uint32(v7));
+        require(v8 == bool(v8));
+        v0 = v9 = 1;
+    }
+    if (v0) {
+        v10 = 0xce0(varg2, varg1 == varg3, varg0, v2);
+        return v10;
+    } else {
+        return 0;
+    }
+}
+
+function 0x358b(uint256 varg0, uint256 varg1, uint256 varg2, uint256 varg3, uint256 varg4) private { 
+    v0 = 0x3606(0x429d069189e0000, varg4);
+    require(varg0 <= v0, Error(32, 7, 'BAL#304'));
+    v1 = v2 = 0x365e(varg0, varg4);
+    v3 = 0x3682(v2, varg4);
+    v1 = v4 = 0x36fe(varg1, varg3);
+    varg2 = v5 = 0x3753(v4, v3);
+    v1 = v6 = 13816;
+    v7 = v8 = 0x3786(v5);
+    v7 = v9 = 0x3606(v8, varg2);
+    return v7;
+    v10 = _SafeMul(varg2, v7);
+    v11 = !varg2;
+    if (varg2) {
+        v12 = _SafeDiv(v10, varg2);
+        v11 = v13 = v12 == v7;
+    }
+    require(v11, Error(32, 7, 'BAL#003'));
+    // Unknown jump to Block {'0x396c0x358b', '0x36340x358b'}. Refer to 3-address code (TAC);
+    v7 = v14 = _SafeDiv(v10, 10 ** 18);
+    // Unknown jump to Block 0x35f80x358b. Refer to 3-address code (TAC);
+    v15 = 0x41ee(v10);
+}
+
+function 0x3606(uint256 varg0, uint256 varg1) private { 
+    v0 = _SafeMul(varg1, varg0);
+    v1 = !varg1;
+    if (varg1) {
+        v2 = _SafeDiv(v0, varg1);
+        v1 = v3 = v2 == varg0;
+    }
+    require(v1, Error(32, 7, 'BAL#003'));
+    v4 = _SafeDiv(v0, 10 ** 18);
+    return v4;
+}
+
+function 0x365e(uint256 varg0, uint256 varg1) private { 
+    v0 = _SafeAdd(varg1, varg0);
+    require(v0 >= varg1, Error(32, 7, 'BAL#000'));
+    return v0;
+}
+
+function 0x3682(uint256 varg0, uint256 varg1) private { 
+    require(bool(varg0), Error(32, 7, 'BAL#004'));
+    if (0 - varg1) {
+        v0 = _SafeMul(varg1, 10 ** 18);
+        v1 = _SafeDiv(v0, varg1);
+        require(v1 == 10 ** 18, Error(32, 7, 'BAL#005'));
+        v2 = _SafeSub(v0, 1);
+        v3 = _SafeDiv(v2, varg0);
+        v4 = _SafeAdd(1, v3);
+        return v4;
+    } else {
+        return 0;
+    }
+}
+
+function 0x36fe(uint256 varg0, uint256 varg1) private { 
+    require(bool(varg0), Error(32, 7, 'BAL#004'));
+    if (0 - varg1) {
+        v0 = _SafeMul(varg1, 10 ** 18);
+        v1 = _SafeDiv(v0, varg1);
+        require(v1 == 10 ** 18, Error(32, 7, 'BAL#005'));
+        v2 = _SafeDiv(v0, varg0);
+        return v2;
+    } else {
+        return 0;
+    }
+}
+
+function 0x3753(uint256 varg0, uint256 varg1) private { 
+    v0 = 0x380a(varg0, varg1);
+    v1 = 0x397f(10000, v0);
+    v2 = 0x365e(1, v1);
+    v3 = 0x365e(v2, v0);
+    return v3;
+}
+
+function 0x3786(uint256 varg0) private { 
+    if (varg0 < 10 ** 18) {
+        v0 = _SafeSub(10 ** 18, varg0);
+        return v0;
+    } else {
+        return 0;
+    }
+}
+
+function 0x380a(uint256 varg0, uint256 varg1) private { 
+    if (0 - varg0) {
+        if (0 - varg1) {
+            require(varg1 < int256.min, Error(32, 7, 'BAL#006'));
+            v0 = _SafeDiv(0x4000000000000000000000000000000000000000000000000000000000000000, 10 ** 20);
+            require(varg0 < v0, Error(32, 7, 'BAL#007'));
+            v1 = _SafeSub(10 ** 18, 10 ** 17);
+            v2 = v3 = v1 < varg1;
+            if (v3) {
+                v4 = _SafeAdd(10 ** 17, 10 ** 18);
+                v2 = v5 = varg1 < v4;
+            }
+            if (!v2) {
+                v6 = 0x3c08(varg1);
+                v7 = v8 = _SafeMul(v6, varg0);
+            } else {
+                v9 = 0x39d1(varg1);
+                require(10 ** 18, Panic(18)); // division by zero
+                v10 = _SafeMul(v9 % 10 ** 18, varg0);
+                v11 = _SafeSdiv(v10, 10 ** 18);
+                v12 = _SafeSdiv(v9, 10 ** 18);
+                v13 = _SafeMul(v12, varg0);
+                v7 = v14 = _SafeAdd(v13, v11);
+            }
+            v15 = _SafeSdiv(v7, 10 ** 18);
+            v16 = 0xfffffffffffffffffffffffffffffffffffffffffffffffdc702bd3a30fc0000 <= v15;
+            if (0xfffffffffffffffffffffffffffffffffffffffffffffffdc702bd3a30fc0000 <= v15) {
+                v16 = v17 = v15 <= 0x70c1cc73b00c80000;
+            }
+            require(v16, Error(32, 7, 'BAL#008'));
+            v18 = 0x41ee(v15);
+            return v18;
+        } else {
+            return 0;
+        }
+    } else {
+        return 10 ** 18;
+    }
+}
+
+function 0x397f(uint256 varg0, uint256 varg1) private { 
+    v0 = _SafeMul(varg1, varg0);
+    v1 = v2 = !varg1;
+    if (varg1) {
+        v3 = _SafeDiv(v0, varg1);
+        v1 = v3 == varg0;
+    }
+    require(v1, Error(32, 7, 'BAL#003'));
+    if (0 - v0) {
+        v4 = _SafeSub(v0, 1);
+        v5 = _SafeDiv(v4, 10 ** 18);
+        v6 = _SafeAdd(1, v5);
+        return v6;
+    } else {
+        return 0;
+    }
+}
+
+function 0x39d1(uint256 varg0) private { 
+    v0 = _SafeMul(varg0, 10 ** 18);
+    v1 = _SafeAdd(v0, 10 ** 36);
+    v2 = _SafeSub(v0, 10 ** 36);
+    v3 = _SafeMul(v2, 10 ** 36);
+    v4 = _SafeSdiv(v3, v1);
+    v5 = _SafeMul(v4, v4);
+    v6 = _SafeSdiv(v5, 10 ** 36);
+    v7 = _SafeMul(v4, v6);
+    v8 = _SafeSdiv(v7, 10 ** 36);
+    v9 = _SafeSdiv(v8, 3);
+    v10 = _SafeAdd(v4, v9);
+    v11 = _SafeMul(v8, v6);
+    v12 = _SafeSdiv(v11, 10 ** 36);
+    v13 = _SafeSdiv(v12, 5);
+    v14 = _SafeAdd(v10, v13);
+    v15 = _SafeMul(v12, v6);
+    v16 = _SafeSdiv(v15, 10 ** 36);
+    v17 = _SafeSdiv(v16, 7);
+    v18 = _SafeAdd(v14, v17);
+    v19 = _SafeMul(v16, v6);
+    v20 = _SafeSdiv(v19, 10 ** 36);
+    v21 = _SafeSdiv(v20, 9);
+    v22 = _SafeAdd(v18, v21);
+    v23 = _SafeMul(v20, v6);
+    v24 = _SafeSdiv(v23, 10 ** 36);
+    v25 = _SafeSdiv(v24, 11);
+    v26 = _SafeAdd(v22, v25);
+    v27 = _SafeMul(v24, v6);
+    v28 = _SafeSdiv(v27, 10 ** 36);
+    v29 = _SafeSdiv(v28, 13);
+    v30 = _SafeAdd(v26, v29);
+    v31 = _SafeMul(v28, v6);
+    v32 = _SafeSdiv(v31, 10 ** 36);
+    v33 = _SafeSdiv(v32, 15);
+    v34 = _SafeAdd(v30, v33);
+    v35 = _SafeMul(2, v34);
+    return v35;
+}
+
+function 0x3c08(uint256 varg0) private { 
+    if (varg0 >= 10 ** 18) {
+        v0 = v1 = 0;
+        v2 = _SafeMul(0x195e54c5dd42177f53a27172fa9ec630262827000000000, 10 ** 18);
+        if (varg0 >= v2) {
+            varg0 = v3 = _SafeSdiv(varg0, 0x195e54c5dd42177f53a27172fa9ec630262827000000000);
+            v0 = v4 = _SafeAdd(v1, 0x6f05b59d3b2000000);
+        }
+        v5 = _SafeMul(0x1425982cf597cd205cef7380, 10 ** 18);
+        if (varg0 >= v5) {
+            varg0 = v6 = _SafeSdiv(varg0, 0x1425982cf597cd205cef7380);
+            v0 = v7 = _SafeAdd(v0, 0x3782dace9d9000000);
+        }
+        v8 = v9 = _SafeMul(v0, 100);
+        v10 = v11 = _SafeMul(varg0, 100);
+        if (v11 >= 0x1855144814a7ff805980ff0084000) {
+            v12 = _SafeMul(v11, 10 ** 20);
+            v10 = v13 = _SafeSdiv(v12, 0x1855144814a7ff805980ff0084000);
+            v8 = v14 = _SafeAdd(v9, 0xad78ebc5ac62000000);
+        }
+        if (v10 >= 0x2df0ab5a80a22c61ab5a700) {
+            v15 = _SafeMul(v10, 10 ** 20);
+            v10 = v16 = _SafeSdiv(v15, 0x2df0ab5a80a22c61ab5a700);
+            v8 = v17 = _SafeAdd(v8, 0x56bc75e2d631000000);
+        }
+        if (v10 >= 0x3f1fce3da636ea5cf850) {
+            v18 = _SafeMul(v10, 10 ** 20);
+            v10 = v19 = _SafeSdiv(v18, 0x3f1fce3da636ea5cf850);
+            v8 = v20 = _SafeAdd(v8, 0x2b5e3af16b18800000);
+        }
+        if (v10 >= 0x127fa27722cc06cc5e2) {
+            v21 = _SafeMul(v10, 10 ** 20);
+            v10 = v22 = _SafeSdiv(v21, 0x127fa27722cc06cc5e2);
+            v8 = v23 = _SafeAdd(v8, 0x15af1d78b58c400000);
+        }
+        if (v10 >= 0x280e60114edb805d03) {
+            v24 = _SafeMul(v10, 10 ** 20);
+            v10 = v25 = _SafeSdiv(v24, 0x280e60114edb805d03);
+            v8 = v26 = _SafeAdd(v8, 0xad78ebc5ac6200000);
+        }
+        if (v10 >= 0xebc5fb41746121110) {
+            v27 = _SafeMul(v10, 10 ** 20);
+            v10 = v28 = _SafeSdiv(v27, 0xebc5fb41746121110);
+            v8 = v29 = _SafeAdd(v8, 10 ** 20);
+        }
+        if (v10 >= 0x8f00f760a4b2db55d) {
+            v30 = _SafeMul(v10, 10 ** 20);
+            v10 = v31 = _SafeSdiv(v30, 0x8f00f760a4b2db55d);
+            v8 = v32 = _SafeAdd(v8, 0x2b5e3af16b1880000);
+        }
+        if (v10 >= 0x6f5f1775788937937) {
+            v33 = _SafeMul(v10, 10 ** 20);
+            v10 = v34 = _SafeSdiv(v33, 0x6f5f1775788937937);
+            v8 = v35 = _SafeAdd(v8, 0x15af1d78b58c40000);
+        }
+        if (v10 >= 0x6248f33704b286603) {
+            v36 = _SafeMul(v10, 10 ** 20);
+            v10 = v37 = _SafeSdiv(v36, 0x6248f33704b286603);
+            v8 = v38 = _SafeAdd(v8, 0xad78ebc5ac620000);
+        }
+        if (v10 >= 0x5c548670b9510e7ac) {
+            v39 = _SafeMul(v10, 10 ** 20);
+            v10 = v40 = _SafeSdiv(v39, 0x5c548670b9510e7ac);
+            v8 = v41 = _SafeAdd(v8, 0x56bc75e2d6310000);
+        }
+        v42 = _SafeAdd(v10, 10 ** 20);
+        v43 = _SafeSub(v10, 10 ** 20);
+        v44 = _SafeMul(v43, 10 ** 20);
+        v45 = _SafeSdiv(v44, v42);
+        v46 = _SafeMul(v45, v45);
+        v47 = _SafeSdiv(v46, 10 ** 20);
+        v48 = _SafeMul(v45, v47);
+        v49 = _SafeSdiv(v48, 10 ** 20);
+        v50 = _SafeSdiv(v49, 3);
+        v51 = _SafeAdd(v45, v50);
+        v52 = _SafeMul(v49, v47);
+        v53 = _SafeSdiv(v52, 10 ** 20);
+        v54 = _SafeSdiv(v53, 5);
+        v55 = _SafeAdd(v51, v54);
+        v56 = _SafeMul(v53, v47);
+        v57 = _SafeSdiv(v56, 10 ** 20);
+        v58 = _SafeSdiv(v57, 7);
+        v59 = _SafeAdd(v55, v58);
+        v60 = _SafeMul(v57, v47);
+        v61 = _SafeSdiv(v60, 10 ** 20);
+        v62 = _SafeSdiv(v61, 9);
+        v63 = _SafeAdd(v59, v62);
+        v64 = _SafeMul(v61, v47);
+        v65 = _SafeSdiv(v64, 10 ** 20);
+        v66 = _SafeSdiv(v65, 11);
+        v67 = _SafeAdd(v63, v66);
+        v68 = _SafeMul(v67, 2);
+        v69 = _SafeAdd(v8, v68);
+        v70 = _SafeSdiv(v69, 100);
+        return v70;
+    } else {
+        v71 = _SafeMul(10 ** 18, 10 ** 18);
+        v72 = _SafeSdiv(v71, varg0);
+        v73 = 0x3c08(v72);
+        v74 = 0x546f(v73);
+        return v74;
+    }
+}
+
+function 0x3ea(uint256 varg0, uint256 varg1, uint256 varg2) private { 
+    v0 = 32 + varg0;
+    require(v0 + MEM[varg0] - v0 >= 128);
+    require(MEM[v0] == address(MEM[v0]));
+    require(MEM[v0 + 32] == address(MEM[v0 + 32]));
+    require(MEM[v0 + 64] == bool(MEM[v0 + 64]));
+    require(MEM[v0 + 96] <= uint64.max);
+    v1 = 0x490d(v0 + MEM[v0 + 96], v0 + MEM[varg0]);
+    if (varg2 > 0) {
+        v2 = v3 = address(MEM[v0]) < address(MEM[v0 + 32]);
+    } else {
+        v2 = v4 = address(MEM[v0 + 32]) < address(MEM[v0]);
+    }
+    if (MEM[v0 + 64]) {
+        require(v1.data + v1.length - v1.data >= 160);
+        require(v1[32][32] <= uint64.max);
+        v5 = 0x4c4d(v1.data + v1[32][32], v1.data + v1.length);
+        require(v1[64] <= uint64.max);
+        v6 = 0x4c4d(v1.data + v1[64], v1.data + v1.length);
+        require(v1[96] <= uint64.max);
+        v7 = 0x4cc1(v1.data + v1[96], v1.data + v1.length);
+        require(v1[128] <= uint64.max);
+        v8 = 0x4cc1(v1.data + v1[128], v1.data + v1.length);
+        v9 = v10 = 1;
+        while (v9 >= v6.length) {
+            require(v9 < v8.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+            if (0 - v8[v9]) {
+                if (1 - v8[v9]) {
+                    if (7 - v8[v9]) {
+                        require(v9 < v5.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                        v11 = _SafeAdd(1, v9);
+                        require(v11 < v5.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                        require(v9 < v6.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                        v12 = address(v5[v9]).balanceOf(this).gas(msg.gas);
+                        if (bool(v12)) {
+                            require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                            v13 = new struct(6);
+                            v14 = address(v6[v9]).getPoolId().gas(msg.gas);
+                            if (bool(v14)) {
+                                require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                v13.word0 = MEM[MEM[64]];
+                                v13.word1 = 0;
+                                v13.word2 = address(v5[v9]);
+                                v13.word3 = address(v5[v11]);
+                                v13.word4 = MEM[MEM[64]];
+                                v15 = new struct(1);
+                                v15.word0 = 0;
+                                v13.word5 = v15;
+                                MEM[64] += 128;
+                                MEM[MEM[64]] = 0x95ea7b300000000000000000000000000000000000000000000000000000000;
+                                MEM[4 + MEM[64]] = address(0x7f51ac3df6a034273fb09bb29e383fcf655e473c);
+                                MEM[4 + MEM[64] + 32] = MEM[MEM[64]];
+                                v16 = address(v5[v9]).call(MEM[MEM[64]:MEM[64] + 68 + MEM[64] - MEM[64]], MEM[MEM[64]:MEM[64] + 32]).gas(msg.gas);
+                                if (bool(v16)) {
+                                    MEM[64] = MEM[64] + (RETURNDATASIZE() + 31 & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0);
+                                    require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                    require(MEM[MEM[64]] == bool(MEM[MEM[64]]));
+                                    v17 = _SafeAdd(1, block.timestamp);
+                                    MEM[MEM[64]] = 0x52bbbe2900000000000000000000000000000000000000000000000000000000;
+                                    MEM[4 + MEM[64]] = 224;
+                                    MEM[4 + MEM[64] + 224] = v13.word0;
+                                    require(v13.word1 < 2, Panic(33)); // failed convertion to enum type
+                                    MEM[4 + MEM[64] + 224 + 32] = v13.word1;
+                                    MEM[4 + MEM[64] + 224 + 64] = address(v13.word2);
+                                    MEM[4 + MEM[64] + 224 + 96] = address(v13.word3);
+                                    MEM[4 + MEM[64] + 224 + 128] = v13.word4;
+                                    MEM[4 + MEM[64] + 224 + 160] = 192;
+                                    MEM[4 + MEM[64] + 224 + 192] = MEM[v13.word5];
+                                    v18 = v19 = 0;
+                                    while (v18 >= MEM[v13.word5]) {
+                                        MEM[v18 + (4 + MEM[64] + 224 + 192 + 32)] = MEM[v18 + (v13.word5 + 32)];
+                                        v18 += 32;
+                                    }
+                                    MEM[MEM[v13.word5] + (4 + MEM[64] + 224 + 192 + 32)] = 0;
+                                    MEM[4 + MEM[64] + 32] = address(this);
+                                    MEM[4 + MEM[64] + 32 + 32] = False;
+                                    MEM[4 + MEM[64] + 32 + 64] = address(this);
+                                    MEM[4 + MEM[64] + 32 + 96] = False;
+                                    MEM[4 + MEM[64] + 160] = 0;
+                                    MEM[196 + MEM[64]] = v17;
+                                    v20 = stor_2_0_19.call(MEM[MEM[64]:MEM[64] + 32 + 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 31 + MEM[v3ea0x2eb1.word5] + 4 + MEM[64] + 224 + 192 - MEM[64]], MEM[MEM[64]:MEM[64] + 32]).gas(msg.gas);
+                                    if (bool(v20)) {
+                                        MEM[64] = MEM[64] + (RETURNDATASIZE() + 31 & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0);
+                                        require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                    } else {
+                                        RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                        revert(0, RETURNDATASIZE());
+                                    }
+                                } else {
+                                    RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                    revert(0, RETURNDATASIZE());
+                                }
+                            } else {
+                                RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                revert(0, RETURNDATASIZE());
+                            }
+                        } else {
+                            RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                            revert(0, RETURNDATASIZE());
+                        }
+                    } else {
+                        require(v9 < v5.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                        v21 = _SafeAdd(1, v9);
+                        require(v21 < v5.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                        require(v9 < v6.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                        v22 = address(v5[v9]).balanceOf(this).gas(msg.gas);
+                        if (bool(v22)) {
+                            require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                            v23 = new struct(6);
+                            v24 = address(v6[v9]).getPoolId().gas(msg.gas);
+                            if (bool(v24)) {
+                                require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                v23.word0 = MEM[MEM[64]];
+                                v23.word1 = 0;
+                                v23.word2 = address(v5[v9]);
+                                v23.word3 = address(v5[v21]);
+                                v23.word4 = MEM[MEM[64]];
+                                v25 = new struct(1);
+                                v25.word0 = 0;
+                                v23.word5 = v25;
+                                MEM[64] += 128;
+                                MEM[MEM[64]] = 0x95ea7b300000000000000000000000000000000000000000000000000000000;
+                                MEM[4 + MEM[64]] = address(0x7f51ac3df6a034273fb09bb29e383fcf655e473c);
+                                MEM[4 + MEM[64] + 32] = MEM[MEM[64]];
+                                v26 = address(v5[v9]).call(MEM[MEM[64]:MEM[64] + 68 + MEM[64] - MEM[64]], MEM[MEM[64]:MEM[64] + 32]).gas(msg.gas);
+                                if (bool(v26)) {
+                                    MEM[64] = MEM[64] + (RETURNDATASIZE() + 31 & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0);
+                                    require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                    require(MEM[MEM[64]] == bool(MEM[MEM[64]]));
+                                    v27 = _SafeAdd(1, block.timestamp);
+                                    MEM[MEM[64]] = 0x52bbbe2900000000000000000000000000000000000000000000000000000000;
+                                    MEM[4 + MEM[64]] = 224;
+                                    MEM[4 + MEM[64] + 224] = v23.word0;
+                                    require(v23.word1 < 2, Panic(33)); // failed convertion to enum type
+                                    MEM[4 + MEM[64] + 224 + 32] = v23.word1;
+                                    MEM[4 + MEM[64] + 224 + 64] = address(v23.word2);
+                                    MEM[4 + MEM[64] + 224 + 96] = address(v23.word3);
+                                    MEM[4 + MEM[64] + 224 + 128] = v23.word4;
+                                    MEM[4 + MEM[64] + 224 + 160] = 192;
+                                    MEM[4 + MEM[64] + 224 + 192] = MEM[v23.word5];
+                                    v28 = v29 = 0;
+                                    while (v28 >= MEM[v23.word5]) {
+                                        MEM[v28 + (4 + MEM[64] + 224 + 192 + 32)] = MEM[v28 + (v23.word5 + 32)];
+                                        v28 += 32;
+                                    }
+                                    MEM[MEM[v23.word5] + (4 + MEM[64] + 224 + 192 + 32)] = 0;
+                                    MEM[4 + MEM[64] + 32] = address(this);
+                                    MEM[4 + MEM[64] + 32 + 32] = False;
+                                    MEM[4 + MEM[64] + 32 + 64] = address(this);
+                                    MEM[4 + MEM[64] + 32 + 96] = False;
+                                    MEM[4 + MEM[64] + 160] = 0;
+                                    MEM[196 + MEM[64]] = v27;
+                                    v30 = stor_2_0_19.call(MEM[MEM[64]:MEM[64] + 32 + 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 31 + MEM[v3ea0x2c40.word5] + 4 + MEM[64] + 224 + 192 - MEM[64]], MEM[MEM[64]:MEM[64] + 32]).gas(msg.gas);
+                                    if (bool(v30)) {
+                                        MEM[64] = MEM[64] + (RETURNDATASIZE() + 31 & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0);
+                                        require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                    } else {
+                                        RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                        revert(0, RETURNDATASIZE());
+                                    }
+                                } else {
+                                    RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                    revert(0, RETURNDATASIZE());
+                                }
+                            } else {
+                                RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                revert(0, RETURNDATASIZE());
+                            }
+                        } else {
+                            RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                            revert(0, RETURNDATASIZE());
+                        }
+                    }
+                } else {
+                    require(v9 < v5.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                    v31 = _SafeAdd(1, v9);
+                    require(v31 < v5.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                    require(v9 < v6.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                    require(v9 < v7.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                    v32 = address(v5[v9]).balanceOf(this).gas(msg.gas);
+                    if (bool(v32)) {
+                        require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                        MEM[MEM[64]] = 0xa9059cbb00000000000000000000000000000000000000000000000000000000;
+                        MEM[4 + MEM[64]] = address(v6[v9]);
+                        MEM[4 + MEM[64] + 32] = MEM[MEM[64]];
+                        v33 = address(v5[v9]).call(MEM[MEM[64]:MEM[64] + 68 + MEM[64] - MEM[64]], MEM[MEM[64]:MEM[64] + 32]).gas(msg.gas);
+                        if (bool(v33)) {
+                            MEM[64] = MEM[64] + (RETURNDATASIZE() + 31 & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0);
+                            require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                            require(MEM[MEM[64]] == bool(MEM[MEM[64]]));
+                            v34 = address(v6[v9]).getReserves().gas(msg.gas);
+                            if (bool(v34)) {
+                                require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 96);
+                                require(MEM[MEM[64]] == uint112(MEM[MEM[64]]));
+                                require(MEM[MEM[64] + 32] == uint112(MEM[MEM[64] + 32]));
+                                require(MEM[MEM[64] + 64] == uint32(MEM[MEM[64] + 64]));
+                                v35 = uint112(MEM[MEM[64]]);
+                                v35 = v36 = uint112(MEM[MEM[64] + 32]);
+                                if (address(v5[v9]) >= address(v5[v31])) {
+                                }
+                                v37 = address(v5[v9]).balanceOf(address(v6[v9])).gas(msg.gas);
+                                if (bool(v37)) {
+                                    require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                                    v38 = _SafeSub(MEM[MEM[64]], v35);
+                                    v39 = _SafeSub(v38, 100);
+                                    if (address(v5[v9]) >= address(v5[v31])) {
+                                    }
+                                    require(v39 * (10000 - v7[v9]) + v35 * 10000, Panic(18)); // division by zero
+                                    v40 = v35 * (v39 * (10000 - v7[v9])) / (v39 * (10000 - v7[v9]) + v35 * 10000) - 1;
+                                    if (address(v5[v9]) < address(v5[v31])) {
+                                        v40 = v41 = 0;
+                                    }
+                                    if (address(v5[v9]) >= address(v5[v31])) {
+                                        v40 = v42 = 0;
+                                    }
+                                    MEM[MEM[64] + 32] = bytes4(0x22c0d9f00000000000000000000000000000000000000000000000000000000);
+                                    MEM[MEM[64] + 36] = v40;
+                                    MEM[MEM[64] + 36 + 32] = v40;
+                                    MEM[MEM[64] + 36 + 64] = address(this);
+                                    MEM[MEM[64] + 36 + 96] = 128;
+                                    MEM[MEM[64] + 36 + 128] = 0;
+                                    v43 = v44 = 0;
+                                    while (v43 >= 0) {
+                                        MEM[v43 + (MEM[64] + 36 + 128 + 32)] = MEM[v43 + (MEM[64] + 32)];
+                                        v43 += 32;
+                                    }
+                                    MEM[MEM[64] + 36 + 128 + 32] = 0;
+                                    require(bool((address(v6[v9])).code.size));
+                                    v45 = address(v6[v9]).call(MEM[MEM[64]:MEM[64] + 32 + MEM[64] + 36 + 128 - MEM[64]], MEM[MEM[64]:MEM[64]]).gas(msg.gas);
+                                    if (!bool(v45)) {
+                                        RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                        revert(0, RETURNDATASIZE());
+                                    }
+                                } else {
+                                    RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                    revert(0, RETURNDATASIZE());
+                                }
+                            } else {
+                                RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                                revert(0, RETURNDATASIZE());
+                            }
+                        } else {
+                            RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                            revert(0, RETURNDATASIZE());
+                        }
+                    } else {
+                        RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                        revert(0, RETURNDATASIZE());
+                    }
+                }
+            } else {
+                require(v9 < v5.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                v46 = _SafeAdd(1, v9);
+                require(v46 < v5.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                require(v9 < v6.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                v47 = address(v6[v9]).token0().gas(msg.gas);
+                if (bool(v47)) {
+                    require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                    require(MEM[MEM[64]] == address(MEM[MEM[64]]));
+                    v48 = address(v5[v9]).balanceOf(this).gas(msg.gas);
+                    if (bool(v48)) {
+                        require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                        v49 = 0x31af(MEM[MEM[64]]);
+                        if (address(v5[v9]) == address(MEM[MEM[64]])) {
+                            v50 = v51 = 0x1000276a4;
+                        } else {
+                            v50 = 0xfffd8963efd1fc6a506488495d951d5263988d25;
+                        }
+                        MEM[MEM[64] + 32] = address(v5[v9]);
+                        MEM[MEM[64] + 64] = address(v5[v46]);
+                        MEM[MEM[64] + 96] = 0;
+                        MEM[MEM[64] + 128] = 128;
+                        MEM[MEM[64] + 160] = 0;
+                        MEM[MEM[64]] = 0x128acb0800000000000000000000000000000000000000000000000000000000;
+                        MEM[4 + MEM[64]] = address(this);
+                        MEM[4 + MEM[64] + 32] = address(v5[v9]) == address(MEM[MEM[64]]);
+                        MEM[4 + MEM[64] + 64] = v49;
+                        MEM[4 + MEM[64] + 96] = address(v50);
+                        MEM[4 + MEM[64] + 128] = 160;
+                        MEM[4 + MEM[64] + 160] = 160;
+                        v52 = v53 = 0;
+                        while (v52 >= 160) {
+                            MEM[v52 + (4 + MEM[64] + 160 + 32)] = MEM[v52 + (MEM[64] + 32)];
+                            v52 += 32;
+                        }
+                        MEM[160 + (4 + MEM[64] + 160 + 32)] = 0;
+                        v54 = address(v6[v9]).call(MEM[MEM[64]:MEM[64] + 192 + 4 + MEM[64] + 160 - MEM[64]], MEM[MEM[64]:MEM[64] + 64]).gas(msg.gas);
+                        if (bool(v54)) {
+                            MEM[64] = MEM[64] + (RETURNDATASIZE() + 31 & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0);
+                            require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 64);
+                        } else {
+                            RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                            revert(0, RETURNDATASIZE());
+                        }
+                    } else {
+                        RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                        revert(0, RETURNDATASIZE());
+                    }
+                } else {
+                    RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                    revert(0, RETURNDATASIZE());
+                }
+            }
+            v9 = 0x4de9(v9);
+        }
+    }
+    if (!v2) {
+        0x30a5(varg1, msg.sender, MEM[v0 + 32]);
+        return ;
+    } else {
+        0x30a5(varg1, msg.sender, MEM[v0]);
+        return ;
+    }
+}
+
+function 0x41ee(uint256 varg0) private { 
+    v0 = v1 = varg0 >= 0xfffffffffffffffffffffffffffffffffffffffffffffffdc702bd3a30fc0000;
+    if (varg0 >= 0xfffffffffffffffffffffffffffffffffffffffffffffffdc702bd3a30fc0000) {
+        v0 = v2 = varg0 <= 0x70c1cc73b00c80000;
+    }
+    require(v0, Error(32, 7, 'BAL#009'));
+    if (varg0 >= 0) {
+        if (varg0 < 0x6f05b59d3b2000000) {
+            if (varg0 < 0x3782dace9d9000000) {
+                v3 = v4 = 1;
+            } else {
+                varg0 = v5 = _SafeSub(varg0, 0x3782dace9d9000000);
+                v3 = v6 = 0x1425982cf597cd205cef7380;
+            }
+        } else {
+            varg0 = v7 = _SafeSub(varg0, 0x6f05b59d3b2000000);
+            v3 = v8 = 0x195e54c5dd42177f53a27172fa9ec630262827000000000;
+        }
+        v9 = v10 = _SafeMul(varg0, 100);
+        v11 = v12 = 10 ** 20;
+        if (v10 >= 0xad78ebc5ac62000000) {
+            v9 = v13 = _SafeSub(v10, 0xad78ebc5ac62000000);
+            v14 = _SafeMul(v12, 0x1855144814a7ff805980ff0084000);
+            v11 = v15 = _SafeSdiv(v14, 10 ** 20);
+        }
+        if (v9 >= 0x56bc75e2d631000000) {
+            v9 = v16 = _SafeSub(v9, 0x56bc75e2d631000000);
+            v17 = _SafeMul(v11, 0x2df0ab5a80a22c61ab5a700);
+            v11 = v18 = _SafeSdiv(v17, 10 ** 20);
+        }
+        if (v9 >= 0x2b5e3af16b18800000) {
+            v9 = v19 = _SafeSub(v9, 0x2b5e3af16b18800000);
+            v20 = _SafeMul(v11, 0x3f1fce3da636ea5cf850);
+            v11 = v21 = _SafeSdiv(v20, 10 ** 20);
+        }
+        if (v9 >= 0x15af1d78b58c400000) {
+            v9 = v22 = _SafeSub(v9, 0x15af1d78b58c400000);
+            v23 = _SafeMul(v11, 0x127fa27722cc06cc5e2);
+            v11 = v24 = _SafeSdiv(v23, 10 ** 20);
+        }
+        if (v9 >= 0xad78ebc5ac6200000) {
+            v9 = v25 = _SafeSub(v9, 0xad78ebc5ac6200000);
+            v26 = _SafeMul(v11, 0x280e60114edb805d03);
+            v11 = v27 = _SafeSdiv(v26, 10 ** 20);
+        }
+        if (v9 >= 10 ** 20) {
+            v9 = v28 = _SafeSub(v9, 10 ** 20);
+            v29 = _SafeMul(v11, 0xebc5fb41746121110);
+            v11 = v30 = _SafeSdiv(v29, 10 ** 20);
+        }
+        if (v9 >= 0x2b5e3af16b1880000) {
+            v9 = v31 = _SafeSub(v9, 0x2b5e3af16b1880000);
+            v32 = _SafeMul(v11, 0x8f00f760a4b2db55d);
+            v11 = v33 = _SafeSdiv(v32, 10 ** 20);
+        }
+        if (v9 >= 0x15af1d78b58c40000) {
+            v9 = v34 = _SafeSub(v9, 0x15af1d78b58c40000);
+            v35 = _SafeMul(v11, 0x6f5f1775788937937);
+            v11 = v36 = _SafeSdiv(v35, 10 ** 20);
+        }
+        v37 = _SafeAdd(10 ** 20, v9);
+        v38 = _SafeMul(v9, v9);
+        v39 = _SafeSdiv(v38, 10 ** 20);
+        v40 = _SafeSdiv(v39, 2);
+        v41 = _SafeAdd(v37, v40);
+        v42 = _SafeMul(v40, v9);
+        v43 = _SafeSdiv(v42, 10 ** 20);
+        v44 = _SafeSdiv(v43, 3);
+        v45 = _SafeAdd(v41, v44);
+        v46 = _SafeMul(v44, v9);
+        v47 = _SafeSdiv(v46, 10 ** 20);
+        v48 = _SafeSdiv(v47, 4);
+        v49 = _SafeAdd(v45, v48);
+        v50 = _SafeMul(v48, v9);
+        v51 = _SafeSdiv(v50, 10 ** 20);
+        v52 = _SafeSdiv(v51, 5);
+        v53 = _SafeAdd(v49, v52);
+        v54 = _SafeMul(v52, v9);
+        v55 = _SafeSdiv(v54, 10 ** 20);
+        v56 = _SafeSdiv(v55, 6);
+        v57 = _SafeAdd(v53, v56);
+        v58 = _SafeMul(v56, v9);
+        v59 = _SafeSdiv(v58, 10 ** 20);
+        v60 = _SafeSdiv(v59, 7);
+        v61 = _SafeAdd(v57, v60);
+        v62 = _SafeMul(v60, v9);
+        v63 = _SafeSdiv(v62, 10 ** 20);
+        v64 = _SafeSdiv(v63, 8);
+        v65 = _SafeAdd(v61, v64);
+        v66 = _SafeMul(v64, v9);
+        v67 = _SafeSdiv(v66, 10 ** 20);
+        v68 = _SafeSdiv(v67, 9);
+        v69 = _SafeAdd(v65, v68);
+        v70 = _SafeMul(v68, v9);
+        v71 = _SafeSdiv(v70, 10 ** 20);
+        v72 = _SafeSdiv(v71, 10);
+        v73 = _SafeAdd(v69, v72);
+        v74 = _SafeMul(v72, v9);
+        v75 = _SafeSdiv(v74, 10 ** 20);
+        v76 = _SafeSdiv(v75, 11);
+        v77 = _SafeAdd(v73, v76);
+        v78 = _SafeMul(v76, v9);
+        v79 = _SafeSdiv(v78, 10 ** 20);
+        v80 = _SafeSdiv(v79, 12);
+        v81 = _SafeAdd(v77, v80);
+        v82 = _SafeMul(v11, v81);
+        v83 = _SafeSdiv(v82, 10 ** 20);
+        v84 = _SafeMul(v83, v3);
+        v85 = _SafeSdiv(v84, 100);
+        return v85;
+    } else {
+        v86 = 0x546f(varg0);
+        v87 = 0x41ee(v86);
+        v88 = _SafeMul(10 ** 18, 10 ** 18);
+        v89 = _SafeSdiv(v88, v87);
+        return v89;
+    }
+}
+
+function receive() public payable { 
+}
+
+function _SafeSub(uint256 varg0, uint256 varg1) private { 
+    require(varg0 - varg1 <= varg0, Panic(17)); // arithmetic overflow or underflow
+    return varg0 - varg1;
+}
+
+function 0x490d(uint256 varg0, uint256 varg1) private { 
+    require(varg0 + 31 < varg1);
+    v0 = MEM[varg0];
+    require(v0 <= uint64.max, Panic(65)); // failed memory allocation (too much memory)
+    v1 = new bytes[](v0);
+    require(!((v1 + (0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 32 + (0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & v0 + 31) + 31) < v1) | (v1 + (0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 32 + (0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & v0 + 31) + 31) > uint64.max)), Panic(65)); // failed memory allocation (too much memory)
+    require(varg0 + v0 + 32 <= varg1);
+    v2 = v3 = 0;
+    while (v2 >= v0) {
+        v1[v2] = MEM[v2 + (varg0 + 32)];
+        v2 += 32;
+    }
+    v1[v0] = 0;
+    return v1;
+}
+
+function _SafeAdd(uint256 varg0, uint256 varg1) private { 
+    require(varg0 <= varg1 + varg0, Panic(17)); // arithmetic overflow or underflow
+    return varg1 + varg0;
+}
+
+function 0x4c4d(uint256 varg0, uint256 varg1) private { 
+    require(varg0 + 31 < varg1);
+    v0 = MEM[varg0];
+    require(v0 <= uint64.max, Panic(65)); // failed memory allocation (too much memory)
+    v1 = new uint256[](v0);
+    require(!((v1 + (0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 32 + (v0 << 5) + 31) < v1) | (v1 + (0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 32 + (v0 << 5) + 31) > uint64.max)), Panic(65)); // failed memory allocation (too much memory)
+    v2 = v3 = v1.data;
+    require(32 + (varg0 + (v0 << 5)) <= varg1);
+    v4 = v5 = varg0 + 32;
+    while (v4 >= 32 + (varg0 + (v0 << 5))) {
+        require(MEM[v4] == address(MEM[v4]));
+        MEM[v2] = MEM[v4];
+        v2 += 32;
+        v4 += 32;
+    }
+    return v1;
+}
+
+function 0x4cc1(uint256 varg0, uint256 varg1) private { 
+    require(varg0 + 31 < varg1);
+    v0 = MEM[varg0];
+    require(v0 <= uint64.max, Panic(65)); // failed memory allocation (too much memory)
+    v1 = new uint256[](v0);
+    require(!((v1 + (0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 32 + (v0 << 5) + 31) < v1) | (v1 + (0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 32 + (v0 << 5) + 31) > uint64.max)), Panic(65)); // failed memory allocation (too much memory)
+    v2 = v3 = v1.data;
+    require(32 + (varg0 + (v0 << 5)) <= varg1);
+    v4 = v5 = varg0 + 32;
+    while (v4 >= 32 + (varg0 + (v0 << 5))) {
+        MEM[v2] = MEM[v4];
+        v2 += 32;
+        v4 += 32;
+    }
+    return v1;
+}
+
+function 0x4de9(uint256 varg0) private { 
+    require(varg0 + 1, Panic(17)); // arithmetic overflow or underflow
+    return 1 + varg0;
+}
+
+function _SafeMul(uint256 varg0, uint256 varg1) private { 
+    require((varg1 == varg1 * varg0 / varg0) | !varg0, Panic(17)); // arithmetic overflow or underflow
+    return varg1 * varg0;
+}
+
+function _SafeDiv(uint256 varg0, uint256 varg1) private { 
+    require(varg1, Panic(18)); // division by zero
+    return varg0 / varg1;
+}
+
+function _SafeSub(uint256 varg0, uint256 varg1) private { 
+    v0 = varg0 - varg1;
+    require(!((varg1 < 0) & (v0 < varg0) | (v0 > varg0) & (varg1 >= 0)), Panic(17)); // arithmetic overflow or underflow
+    return v0;
+}
+
+function _SafeAdd(uint256 varg0, uint256 varg1) private { 
+    v0 = varg1 + varg0 < varg1;
+    require(!((varg0 < 0) & (varg1 + varg0 >= varg1) | v0 & (varg0 >= 0)), Panic(17)); // arithmetic overflow or underflow
+    return varg1 + varg0;
+}
+
+function _SafeMul(uint256 varg0, uint256 varg1) private { 
+    require(!((varg1 == int256.min) & (varg0 < 0)), Panic(17)); // arithmetic overflow or underflow
+    require(!varg0 | (varg1 == varg1 * varg0 / varg0), Panic(17)); // arithmetic overflow or underflow
+    return varg1 * varg0;
+}
+
+function _SafeSdiv(uint256 varg0, uint256 varg1) private { 
+    require(varg1, Panic(18)); // division by zero
+    require(!((varg1 == uint256.max) & (varg0 == int256.min)), Panic(17)); // arithmetic overflow or underflow
+    return varg0 / varg1;
+}
+
+function 0x546f(uint256 varg0) private { 
+    require(varg0 + int256.min, Panic(17)); // arithmetic overflow or underflow
+    return 0 - varg0;
+}
+
+function 0x6ac(uint256 varg0) private { 
+    v0 = 32 + varg0;
+    v1 = v0 + MEM[varg0];
+    require(v1 - v0 >= 160);
+    require(MEM[v0 + 32] <= uint64.max);
+    v2 = 0x4c4d(v0 + MEM[v0 + 32], v1);
+    require(MEM[v0 + 64] <= uint64.max);
+    v3 = 0x4c4d(v0 + MEM[v0 + 64], v1);
+    require(MEM[v0 + 96] <= uint64.max);
+    v4 = 0x4cc1(v0 + MEM[v0 + 96], v1);
+    require(MEM[v0 + 128] <= uint64.max);
+    v5 = 0x4cc1(v0 + MEM[v0 + 128], v1);
+    require(0 < v5.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+    v6 = v5.data;
+    if (1 != v5[0]) {
+        v7 = v8 = _SafeSub(v3.length, 1);
+        v9 = v10 = 0;
+    } else {
+        v7 = v11 = v3.length;
+        v9 = v12 = 1;
+    }
+    if (v9 >= v7) {
+        require(0 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+        v13 = v2.data;
+        require(0 < v3.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+        v14 = v3.data;
+        v15 = _SafeAdd(10, MEM[v0]);
+        v16, /* bool */ v17 = address(v2[0x0]).transfer(address(v3[0x0]), v15).gas(msg.gas);
+        require(bool(v16), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+        require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+        require(v17 == bool(v17));
+        v18, /* uint256 */ v19 = address(v2[0x0]).balanceOf(this).gas(msg.gas);
+        require(bool(v18), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+        require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+        if (v19) {
+            v20, /* bool */ v21 = address(v2[0x0]).transfer(_owner, v19).gas(msg.gas);
+            require(bool(v20), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+            require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+            require(v21 == bool(v21));
+        }
+        return ;
+    } else {
+        require(v9 < v5.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+        if (0 - v5[v9]) {
+            if (1 - v5[v9]) {
+                if (7 - v5[v9]) {
+                    v22 = v23 = 2224;
+                    require(v9 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                    v24 = v25 = v2[v9];
+                    v26 = v27 = _SafeAdd(1, v9);
+                } else {
+                    v28 = v29 = 0x18c4b;
+                    require(v9 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                    v30 = v31 = v2[v9];
+                    v32 = v33 = _SafeAdd(1, v9);
+                }
+            } else {
+                v34 = v35 = 0x18b65;
+                require(v9 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                v36 = v37 = v2[v9];
+                v38 = v39 = _SafeAdd(1, v9);
+            }
+        } else {
+            v40 = v41 = 0x18a7f;
+            require(v9 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+            v42 = v43 = v2[v9];
+            v44 = v45 = _SafeAdd(1, v9);
+        }
+    }
+    require(v44 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+    require(v9 < v3.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+    v46 = address(v3[v9]).token0().gas(msg.gas);
+    if (bool(v46)) {
+        require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+        require(MEM[MEM[64]] == address(MEM[MEM[64]]));
+        v47 = address(v42).balanceOf(this).gas(msg.gas);
+        if (bool(v47)) {
+            require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+            v48 = 0x31af(MEM[MEM[64]]);
+            if (address(v42) == address(MEM[MEM[64]])) {
+                v49 = v50 = 0x1000276a4;
+            } else {
+                v49 = 0xfffd8963efd1fc6a506488495d951d5263988d25;
+            }
+            MEM[MEM[64] + 32] = address(v42);
+            MEM[MEM[64] + 64] = address(v2[v44]);
+            MEM[MEM[64] + 96] = 0;
+            MEM[MEM[64] + 128] = 128;
+            MEM[MEM[64] + 160] = 0;
+            MEM[MEM[64]] = 0x128acb0800000000000000000000000000000000000000000000000000000000;
+            MEM[4 + MEM[64]] = address(this);
+            MEM[4 + MEM[64] + 32] = address(v42) == address(MEM[MEM[64]]);
+            MEM[4 + MEM[64] + 64] = v48;
+            MEM[4 + MEM[64] + 96] = address(v49);
+            MEM[4 + MEM[64] + 128] = 160;
+            MEM[4 + MEM[64] + 160] = 160;
+            v51 = v52 = 0;
+            while (v51 >= 160) {
+                MEM[v51 + (4 + MEM[64] + 160 + 32)] = MEM[v51 + (MEM[64] + 32)];
+                v51 += 32;
+            }
+            MEM[160 + (4 + MEM[64] + 160 + 32)] = 0;
+            v53 = address(v3[v9]).call(MEM[MEM[64]:MEM[64] + 192 + 4 + MEM[64] + 160 - MEM[64]], MEM[MEM[64]:MEM[64] + 64]).gas(msg.gas);
+            if (bool(v53)) {
+                MEM[64] = MEM[64] + (RETURNDATASIZE() + 31 & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0);
+                require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 64);
+                // Unknown jump to Block {'0x18e1b', '0x18a7f'}. Refer to 3-address code (TAC);
+            } else {
+                RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                revert(0, RETURNDATASIZE());
+            }
+        } else {
+            RETURNDATACOPY(0, 0, RETURNDATASIZE());
+            revert(0, RETURNDATASIZE());
+        }
+    } else {
+        RETURNDATACOPY(0, 0, RETURNDATASIZE());
+        revert(0, RETURNDATASIZE());
+    }
+    v9 = 0x4de9(v9);
+    // Unknown jump to Block 0x6ff. Refer to 3-address code (TAC);
+    v9 = 0x4de9(v9);
+    // Unknown jump to Block 0xa8f. Refer to 3-address code (TAC);
+    require(v38 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+    require(v9 < v3.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+    require(v9 < v4.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+    v54 = address(v36).balanceOf(this).gas(msg.gas);
+    if (bool(v54)) {
+        require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+        MEM[MEM[64]] = 0xa9059cbb00000000000000000000000000000000000000000000000000000000;
+        MEM[4 + MEM[64]] = address(v3[v9]);
+        MEM[4 + MEM[64] + 32] = MEM[MEM[64]];
+        v55 = address(v36).call(MEM[MEM[64]:MEM[64] + 68 + MEM[64] - MEM[64]], MEM[MEM[64]:MEM[64] + 32]).gas(msg.gas);
+        if (bool(v55)) {
+            MEM[64] = MEM[64] + (RETURNDATASIZE() + 31 & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0);
+            require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+            require(MEM[MEM[64]] == bool(MEM[MEM[64]]));
+            v56 = address(v3[v9]).getReserves().gas(msg.gas);
+            if (bool(v56)) {
+                require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 96);
+                require(MEM[MEM[64]] == uint112(MEM[MEM[64]]));
+                require(MEM[MEM[64] + 32] == uint112(MEM[MEM[64] + 32]));
+                require(MEM[MEM[64] + 64] == uint32(MEM[MEM[64] + 64]));
+                v57 = uint112(MEM[MEM[64]]);
+                v57 = v58 = uint112(MEM[MEM[64] + 32]);
+                if (address(v36) >= address(v2[v38])) {
+                }
+                v59 = address(v36).balanceOf(address(v3[v9])).gas(msg.gas);
+                if (bool(v59)) {
+                    require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                    v60 = _SafeSub(MEM[MEM[64]], v57);
+                    v61 = _SafeSub(v60, 100);
+                    if (address(v36) >= address(v2[v38])) {
+                    }
+                    require(v61 * (10000 - v4[v9]) + v57 * 10000, Panic(18)); // division by zero
+                    v62 = v57 * (v61 * (10000 - v4[v9])) / (v61 * (10000 - v4[v9]) + v57 * 10000) - 1;
+                    if (address(v36) < address(v2[v38])) {
+                        v62 = v63 = 0;
+                    }
+                    if (address(v36) >= address(v2[v38])) {
+                        v62 = v64 = 0;
+                    }
+                    MEM[MEM[64] + 32] = bytes4(0x22c0d9f00000000000000000000000000000000000000000000000000000000);
+                    MEM[MEM[64] + 36] = v62;
+                    MEM[MEM[64] + 36 + 32] = v62;
+                    MEM[MEM[64] + 36 + 64] = address(this);
+                    MEM[MEM[64] + 36 + 96] = 128;
+                    MEM[MEM[64] + 36 + 128] = 0;
+                    v65 = v66 = 0;
+                    while (v65 >= 0) {
+                        MEM[v65 + (MEM[64] + 36 + 128 + 32)] = MEM[v65 + (MEM[64] + 32)];
+                        v65 += 32;
+                    }
+                    MEM[MEM[64] + 36 + 128 + 32] = 0;
+                    require(bool((address(v3[v9])).code.size));
+                    v67 = address(v3[v9]).call(MEM[MEM[64]:MEM[64] + 32 + MEM[64] + 36 + 128 - MEM[64]], MEM[MEM[64]:MEM[64]]).gas(msg.gas);
+                    if (bool(v67)) {
+                        // Unknown jump to Block {'0x18ea9', '0x18b65'}. Refer to 3-address code (TAC);
+                        // Unknown jump to Block 0x8b0. Refer to 3-address code (TAC);
+                    } else {
+                        RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                        revert(0, RETURNDATASIZE());
+                    }
+                } else {
+                    RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                    revert(0, RETURNDATASIZE());
+                }
+            } else {
+                RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                revert(0, RETURNDATASIZE());
+            }
+        } else {
+            RETURNDATACOPY(0, 0, RETURNDATASIZE());
+            revert(0, RETURNDATASIZE());
+        }
+    } else {
+        RETURNDATACOPY(0, 0, RETURNDATASIZE());
+        revert(0, RETURNDATASIZE());
+    }
+    require(v32 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+    require(v9 < v3.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+    v68 = address(v30).balanceOf(this).gas(msg.gas);
+    if (bool(v68)) {
+        require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+        v69 = new struct(6);
+        v70 = address(v3[v9]).getPoolId().gas(msg.gas);
+        if (bool(v70)) {
+            require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+            v69.word0 = MEM[MEM[64]];
+            v69.word1 = 0;
+            v69.word2 = address(v30);
+            v69.word3 = address(v2[v32]);
+            v69.word4 = MEM[MEM[64]];
+            v71 = new struct(1);
+            v71.word0 = 0;
+            v69.word5 = v71;
+            MEM[64] += 128;
+            MEM[MEM[64]] = 0x95ea7b300000000000000000000000000000000000000000000000000000000;
+            MEM[4 + MEM[64]] = address(0x7f51ac3df6a034273fb09bb29e383fcf655e473c);
+            MEM[4 + MEM[64] + 32] = MEM[MEM[64]];
+            v72 = address(v30).call(MEM[MEM[64]:MEM[64] + 68 + MEM[64] - MEM[64]], MEM[MEM[64]:MEM[64] + 32]).gas(msg.gas);
+            if (bool(v72)) {
+                MEM[64] = MEM[64] + (RETURNDATASIZE() + 31 & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0);
+                require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                require(MEM[MEM[64]] == bool(MEM[MEM[64]]));
+                v73 = _SafeAdd(1, block.timestamp);
+                MEM[MEM[64]] = 0x52bbbe2900000000000000000000000000000000000000000000000000000000;
+                MEM[4 + MEM[64]] = 224;
+                MEM[4 + MEM[64] + 224] = v69.word0;
+                require(v69.word1 < 2, Panic(33)); // failed convertion to enum type
+                MEM[4 + MEM[64] + 224 + 32] = v69.word1;
+                MEM[4 + MEM[64] + 224 + 64] = address(v69.word2);
+                MEM[4 + MEM[64] + 224 + 96] = address(v69.word3);
+                MEM[4 + MEM[64] + 224 + 128] = v69.word4;
+                MEM[4 + MEM[64] + 224 + 160] = 192;
+                MEM[4 + MEM[64] + 224 + 192] = MEM[v69.word5];
+                v74 = v75 = 0;
+                while (v74 >= MEM[v69.word5]) {
+                    MEM[v74 + (4 + MEM[64] + 224 + 192 + 32)] = MEM[v74 + (v69.word5 + 32)];
+                    v74 += 32;
+                }
+                MEM[MEM[v69.word5] + (4 + MEM[64] + 224 + 192 + 32)] = 0;
+                MEM[4 + MEM[64] + 32] = address(this);
+                MEM[4 + MEM[64] + 32 + 32] = False;
+                MEM[4 + MEM[64] + 32 + 64] = address(this);
+                MEM[4 + MEM[64] + 32 + 96] = False;
+                MEM[4 + MEM[64] + 160] = 0;
+                MEM[196 + MEM[64]] = v73;
+                v76 = stor_2_0_19.call(MEM[MEM[64]:MEM[64] + 32 + 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 31 + MEM[v6ac0x2c40.word5] + 4 + MEM[64] + 224 + 192 - MEM[64]], MEM[MEM[64]:MEM[64] + 32]).gas(msg.gas);
+                if (bool(v76)) {
+                    MEM[64] = MEM[64] + (RETURNDATASIZE() + 31 & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0);
+                    require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                    // Unknown jump to Block {'0x18c4b', '0x18f37'}. Refer to 3-address code (TAC);
+                    // Unknown jump to Block 0x8b0. Refer to 3-address code (TAC);
+                } else {
+                    RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                    revert(0, RETURNDATASIZE());
+                }
+            } else {
+                RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                revert(0, RETURNDATASIZE());
+            }
+        } else {
+            RETURNDATACOPY(0, 0, RETURNDATASIZE());
+            revert(0, RETURNDATASIZE());
+        }
+    } else {
+        RETURNDATACOPY(0, 0, RETURNDATASIZE());
+        revert(0, RETURNDATASIZE());
+    }
+    require(v26 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+    require(v9 < v3.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+    v77 = address(v24).balanceOf(this).gas(msg.gas);
+    if (bool(v77)) {
+        require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+        v78 = new struct(6);
+        v79 = address(v3[v9]).getPoolId().gas(msg.gas);
+        if (bool(v79)) {
+            require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+            v78.word0 = MEM[MEM[64]];
+            v78.word1 = 0;
+            v78.word2 = address(v24);
+            v78.word3 = address(v2[v26]);
+            v78.word4 = MEM[MEM[64]];
+            v80 = new struct(1);
+            v80.word0 = 0;
+            v78.word5 = v80;
+            MEM[64] += 128;
+            MEM[MEM[64]] = 0x95ea7b300000000000000000000000000000000000000000000000000000000;
+            MEM[4 + MEM[64]] = address(0x7f51ac3df6a034273fb09bb29e383fcf655e473c);
+            MEM[4 + MEM[64] + 32] = MEM[MEM[64]];
+            v81 = address(v24).call(MEM[MEM[64]:MEM[64] + 68 + MEM[64] - MEM[64]], MEM[MEM[64]:MEM[64] + 32]).gas(msg.gas);
+            if (bool(v81)) {
+                MEM[64] = MEM[64] + (RETURNDATASIZE() + 31 & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0);
+                require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                require(MEM[MEM[64]] == bool(MEM[MEM[64]]));
+                v82 = _SafeAdd(1, block.timestamp);
+                MEM[MEM[64]] = 0x52bbbe2900000000000000000000000000000000000000000000000000000000;
+                MEM[4 + MEM[64]] = 224;
+                MEM[4 + MEM[64] + 224] = v78.word0;
+                require(v78.word1 < 2, Panic(33)); // failed convertion to enum type
+                MEM[4 + MEM[64] + 224 + 32] = v78.word1;
+                MEM[4 + MEM[64] + 224 + 64] = address(v78.word2);
+                MEM[4 + MEM[64] + 224 + 96] = address(v78.word3);
+                MEM[4 + MEM[64] + 224 + 128] = v78.word4;
+                MEM[4 + MEM[64] + 224 + 160] = 192;
+                MEM[4 + MEM[64] + 224 + 192] = MEM[v78.word5];
+                v83 = v84 = 0;
+                while (v83 >= MEM[v78.word5]) {
+                    MEM[v83 + (4 + MEM[64] + 224 + 192 + 32)] = MEM[v83 + (v78.word5 + 32)];
+                    v83 += 32;
+                }
+                MEM[MEM[v78.word5] + (4 + MEM[64] + 224 + 192 + 32)] = 0;
+                MEM[4 + MEM[64] + 32] = address(this);
+                MEM[4 + MEM[64] + 32 + 32] = False;
+                MEM[4 + MEM[64] + 32 + 64] = address(this);
+                MEM[4 + MEM[64] + 32 + 96] = False;
+                MEM[4 + MEM[64] + 160] = 0;
+                MEM[196 + MEM[64]] = v82;
+                v85 = stor_2_0_19.call(MEM[MEM[64]:MEM[64] + 32 + 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 31 + MEM[v6ac0x2eb1.word5] + 4 + MEM[64] + 224 + 192 - MEM[64]], MEM[MEM[64]:MEM[64] + 32]).gas(msg.gas);
+                if (bool(v85)) {
+                    MEM[64] = MEM[64] + (RETURNDATASIZE() + 31 & 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0);
+                    require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+                    // Unknown jump to Block {'0xb26', '0x8b0'}. Refer to 3-address code (TAC);
+                } else {
+                    RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                    revert(0, RETURNDATASIZE());
+                }
+            } else {
+                RETURNDATACOPY(0, 0, RETURNDATASIZE());
+                revert(0, RETURNDATASIZE());
+            }
+        } else {
+            RETURNDATACOPY(0, 0, RETURNDATASIZE());
+            revert(0, RETURNDATASIZE());
+        }
+    } else {
+        RETURNDATACOPY(0, 0, RETURNDATASIZE());
+        revert(0, RETURNDATASIZE());
+    }
+    if (v9 >= v7) {
+        require(v7 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+        require(v7 < v3.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+        v86, /* bool */ v87 = address(v2[v7]).transfer(address(v3[v7]), MEM[v0]).gas(msg.gas);
+        require(bool(v86), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+        require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+        require(v87 == bool(v87));
+        v88, /* uint256 */ v89 = address(v2[v7]).balanceOf(this).gas(msg.gas);
+        require(bool(v88), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+        require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+        v90, /* bool */ v91 = address(v2[v7]).transfer(_owner, v89).gas(msg.gas);
+        require(bool(v90), 0, RETURNDATASIZE()); // checks call status, propagates error data on error
+        require(MEM[64] + RETURNDATASIZE() - MEM[64] >= 32);
+        require(v91 == bool(v91));
+        return ;
+    } else {
+        require(v9 < v5.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+        if (0 - v5[v9]) {
+            if (1 - v5[v9]) {
+                if (7 - v5[v9]) {
+                    v22 = v92 = 2854;
+                    require(v9 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                    v24 = v93 = v2[v9];
+                    v26 = v94 = _SafeAdd(1, v9);
+                } else {
+                    v28 = v95 = 0x18f37;
+                    require(v9 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                    v30 = v96 = v2[v9];
+                    v32 = v97 = _SafeAdd(1, v9);
+                }
+            } else {
+                v34 = v98 = 0x18ea9;
+                require(v9 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+                v36 = v99 = v2[v9];
+                v38 = v100 = _SafeAdd(1, v9);
+            }
+        } else {
+            v40 = v101 = 0x18e1b;
+            require(v9 < v2.length, Panic(50)); // access an out-of-bounds or negative index of bytesN array or slice
+            v42 = v102 = v2[v9];
+            v44 = v103 = _SafeAdd(1, v9);
+        }
+    }
+}
+
+function 0xce0(uint256 varg0, uint256 varg1, uint256 varg2, address varg3) private { 
+    v0 = _SafeSub(10 ** 6, varg0);
+    v1 = _SafeMul(varg2, v0);
+    if (!varg1) {
+        v2 = _SafeDiv(v1, 10 ** 6);
+        v3 = _SafeMul(uint96.max + 1, v2);
+        v4 = _SafeDiv(v3, varg3);
+        v5 = _SafeMul(uint96.max + 1, v4);
+        v6 = _SafeDiv(v5, varg3);
+        return v6;
+    } else {
+        v7 = _SafeDiv(v1, 10 ** 6);
+        v8 = _SafeMul(v7, varg3);
+        v9 = _SafeDiv(v8, uint96.max + 1);
+        v10 = _SafeMul(v9, varg3);
+        v11 = _SafeDiv(v10, uint96.max + 1);
+        return v11;
+    }
+}
+
+// Note: The function selector is not present in the original solidity code.
+// However, we display it for the sake of completeness.
+
+function __function_selector__( function_selector) public payable { 
+    MEM[64] = 128;
+    if (msg.data.length < 4) {
+        if (!msg.data.length) {
+            receive();
+        }
+    } else {
+        v0 = v1 = function_selector >> 224;
+        if (0x715018a6 > v1) {
+            if (0x391615ab == v1) {
+                0x391615ab();
+            } else if (0x3c9a31e9 == v1) {
+                0x3c9a31e9();
+            } else if (0x57376198 == v1) {
+                rescueTokens(address,uint256);
+            } else if (0x70a5e7e5 == v1) {
+                0x70a5e7e5();
+            }
+        } else if (0x715018a6 == v1) {
+            renounceOwnership();
+        } else if (0x8da5cb5b == v1) {
+            owner();
+        } else if (0x8fe06a49 == v1) {
+            0x8fe06a49();
+        } else if (0x9b634771 == v1) {
+            0x9b634771();
+        } else if (0xf2fde38b == v1) {
+            transferOwnership(address);
+        }
+    }
+    v2 = _SafeSub(msg.data.length, 4);
+    v3 = new bytes[](msg.data.length);
+    CALLDATACOPY(v3.data, 0, msg.data.length);
+    v3[msg.data.length] = 0;
+    v4 = _SafeAdd(31, v2);
+    require(v4 >= v2, Error('slice_overflow'));
+    v5 = _SafeAdd(4, v2);
+    require(v3.length >= v5, Error('slice_outOfBounds'));
+    if (bool(v2)) {
+        v6 = v7 = MEM[64];
+        v8 = v9 = v7 + (v2 & 0x1f) + (!(v2 & 0x1f) << 5);
+        v10 = v11 = v3 + (v2 & 0x1f) + (!(v2 & 0x1f) << 5) + 4;
+        while (v8 >= v9 + v2) {
+            MEM[v8] = MEM[v10];
+            v8 += 32;
+            v10 += 32;
+        }
+        MEM[v7] = v2;
+    } else {
+        v6 = v12 = MEM[64];
+        MEM[v12] = 0;
+    }
+    v13 = new uint256[](MEM[v6]);
+    v14 = v15 = 0;
+    while (v14 >= MEM[v6]) {
+        MEM[v14 + v13.data] = MEM[v14 + (v6 + 32)];
+        v14 += 32;
+    }
+    MEM[MEM[v6] + v13.data] = 0;
+    v16 = v17, /* uint256 */ v18 = ___function_selector__.staticcall(uint32(0x3a0c1c55), v13).gas(msg.gas);
+    if (v17) {
+        RETURNDATACOPY(v18, 0, RETURNDATASIZE());
+        MEM[64] = v18 + (0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & RETURNDATASIZE() + 31);
+        require(v18 + RETURNDATASIZE() - v18 >= 128);
+        require(MEM[v18] == address(MEM[v18]));
+        require(MEM[v18 + 96] <= uint64.max);
+        v0 = 0x490d(v18 + MEM[v18 + 96], v18 + RETURNDATASIZE());
+        v16 = v19 = 1;
+    }
+    if (v16) {
+        v20 = v21 = !MEM[v18 + 32];
+        if (MEM[v18 + 32]) {
+            v20 = v22 = !MEM[v18 + 64];
+        }
+        if (!v20) {
+            v23 = _SafeSub(msg.data.length, 4);
+            v24 = new bytes[](msg.data.length);
+            CALLDATACOPY(v24.data, 0, msg.data.length);
+            v24[msg.data.length] = 0;
+            v25 = _SafeAdd(31, v23);
+            require(v25 >= v23, Error('slice_overflow'));
+            v26 = _SafeAdd(4, v23);
+            require(v24.length >= v26, Error('slice_outOfBounds'));
+            if (bool(v23)) {
+                v27 = v28 = MEM[64];
+                v29 = v30 = v28 + (v23 & 0x1f) + (!(v23 & 0x1f) << 5);
+                v31 = v32 = v24 + (v23 & 0x1f) + (!(v23 & 0x1f) << 5) + 4;
+                while (v29 >= v30 + v23) {
+                    MEM[v29] = MEM[v31];
+                    v29 += 32;
+                    v31 += 32;
+                }
+                MEM[v28] = v23;
+                MEM[64] = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 31 + v29;
+            } else {
+                v27 = v33 = MEM[64];
+                MEM[v33] = 0;
+            }
+            require(32 + v27 + MEM[v27] - (32 + v27) >= 96);
+            v34 = MEM[32 + v27];
+            v35 = MEM[32 + v27 + 32];
+            require(MEM[32 + v27 + 64] <= uint64.max);
+            v36 = 0x490d(32 + v27 + MEM[32 + v27 + 64], 32 + v27 + MEM[v27]);
+        } else {
+            0x6ac(v0);
+            exit;
+        }
+    } else {
+        v37 = _SafeSub(msg.data.length, 4);
+        v38 = new bytes[](msg.data.length);
+        CALLDATACOPY(v38.data, 0, msg.data.length);
+        v38[msg.data.length] = 0;
+        v39 = _SafeAdd(31, v37);
+        require(v39 >= v37, Error('slice_overflow'));
+        v40 = _SafeAdd(4, v37);
+        require(v38.length >= v40, Error('slice_outOfBounds'));
+        if (bool(v37)) {
+            v41 = v42 = MEM[64];
+            v43 = v44 = v42 + (v37 & 0x1f) + (!(v37 & 0x1f) << 5);
+            v45 = v46 = v38 + (v37 & 0x1f) + (!(v37 & 0x1f) << 5) + 4;
+            while (v43 >= v44 + v37) {
+                MEM[v43] = MEM[v45];
+                v43 += 32;
+                v45 += 32;
+            }
+            MEM[v42] = v37;
+            MEM[64] = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 & 31 + v43;
+        } else {
+            v41 = v47 = MEM[64];
+            MEM[v47] = 0;
+        }
+        require(32 + v41 + MEM[v41] - (32 + v41) >= 96);
+        v34 = v48 = MEM[32 + v41];
+        v35 = v49 = MEM[32 + v41 + 32];
+        require(MEM[32 + v41 + 64] <= uint64.max);
+        v36 = v50 = 0x490d(32 + v41 + MEM[32 + v41 + 64], 32 + v41 + MEM[v41]);
+    }
+    0x3ea(v36, v35, v34);
+}
